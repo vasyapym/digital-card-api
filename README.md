@@ -4,8 +4,8 @@ Read-only GraphQL API цифровой визитки разработчика: 
 
 **Стек:** TypeScript · Node.js · NestJS 11 · GraphQL (code-first, Apollo) · Prisma 6 · PostgreSQL · Docker
 
-- Demo (Apollo Sandbox): https://your-app.onrender.com/graphql
-- Health check: https://your-app.onrender.com/health
+- Demo (Apollo Sandbox): https://vasyapym.onrender.com/graphql
+- Health check: https://vasyapym.onrender.com/health
 
 > Бесплатный хостинг «засыпает» без запросов: первый запрос может занять до минуты.
 

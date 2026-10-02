@@ -49,7 +49,7 @@ export const profilesData = [
       {
         name: 'Digital Card API',
         description: 'Эта цифровая визитка: NestJS + GraphQL + Prisma + PostgreSQL + Docker',
-        url: 'https://your-app.onrender.com/graphql',
+        url: 'https://vasyapym.onrender.com/graphql',
         repositoryUrl: 'https://github.com/vasyapym/digital-card-api',
         technologies: ['TypeScript', 'NestJS', 'GraphQL', 'Prisma', 'PostgreSQL', 'Docker'],
       },
