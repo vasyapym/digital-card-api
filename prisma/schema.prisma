@@ -1,0 +1,77 @@
+generator client {
+  provider     = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Profile {
+  id        Int     @id @default(autoincrement())
+  slug      String  @unique
+  isPrimary Boolean @default(false)
+  name      String
+  title     String
+  description String
+  location  String?
+  email     String?
+
+  links       Link[]
+  skills      Skill[]
+  experiences Experience[]
+  projects    Project[]
+}
+
+model Link {
+  id        Int     @id @default(autoincrement())
+  label     String
+  url       String
+  sortOrder Int     @default(0)
+  profileId Int
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+}
+
+model Skill {
+  id        Int     @id @default(autoincrement())
+  name      String
+  category  String
+  sortOrder Int     @default(0)
+  profileId Int
+  profile   Profile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([profileId, name])
+  @@index([profileId])
+}
+
+model Experience {
+  id           Int       @id @default(autoincrement())
+  company      String
+  position     String
+  startDate    DateTime  @db.Date
+  endDate      DateTime? @db.Date
+  achievements String[]
+  sortOrder    Int       @default(0)
+  profileId    Int
+  profile      Profile   @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+}
+
+model Project {
+  id            Int      @id @default(autoincrement())
+  name          String
+  description   String?
+  url           String
+  repositoryUrl String?
+  technologies  String[]
+  sortOrder     Int      @default(0)
+  profileId     Int
+  profile       Profile  @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([profileId])
+}
