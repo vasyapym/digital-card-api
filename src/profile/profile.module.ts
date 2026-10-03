@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { CLOCK, systemClock } from '../common/clock';
+import { ProfileCardView } from './profile-card.view';
 import { ProfileRepository } from './profile.repository';
 import { ProfileResolver } from './profile.resolver';
 import { ProfileService } from './profile.service';
@@ -9,7 +10,9 @@ import { ProfileService } from './profile.service';
     ProfileResolver,
     ProfileService,
     ProfileRepository,
+    ProfileCardView,
     { provide: CLOCK, useValue: systemClock },
   ],
+  exports: [ProfileCardView],
 })
 export class ProfileModule {}

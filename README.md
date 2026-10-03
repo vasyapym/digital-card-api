@@ -4,6 +4,7 @@ Read-only GraphQL API цифровой визитки разработчика: 
 
 **Стек:** TypeScript · Node.js · NestJS 11 · GraphQL (code-first, Apollo) · Prisma 6 · PostgreSQL · Docker
 
+- Визитка (HTML): https://vasyapym.onrender.com/
 - Demo (Apollo Sandbox): https://vasyapym.onrender.com/graphql
 - Health check: https://vasyapym.onrender.com/health
 
@@ -18,6 +19,7 @@ npm install          # один раз, чтобы появился package-lock
 docker compose up --build
 ```
 
+- Визитка (HTML): http://localhost:3000/
 - GraphQL + Sandbox: http://localhost:3000/graphql
 - Health: http://localhost:3000/health
 
