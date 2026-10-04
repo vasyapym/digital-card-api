@@ -7,9 +7,9 @@ const base: Profile = {
   name: 'Vasily Argunov',
   title: 'Backend Developer · PHP 8 / 1C-Bitrix',
   description: 'I build e-commerce backends.',
-  location: 'Saint Petersburg, Russia',
+  location: 'Almaty, Kazakhstan',
   email: 'vasyapym@gmail.com',
-  links: [{ label: 'Telegram', url: 'https://t.me/vspmzx' }],
+  links: [{ label: 'GitHub', url: 'https://github.com/vasyapym' }],
   skills: [{ name: 'PHP 8', category: 'Languages' }],
   experience: [
     {

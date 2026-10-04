@@ -7,29 +7,30 @@ export const profilesData = [
     name: 'Vasily Argunov',
     title: 'Backend Developer · PHP 8 / 1C-Bitrix',
     description:
-      'I build e-commerce backends with PHP 8 and 1C-Bitrix (D7), focusing on 1C integrations, SQL performance, and catalog tooling for 400,000+ SKUs. ' +
+      'I build e-commerce backends on PHP 8 and 1C-Bitrix (D7) — 1C integrations, SQL performance, catalog tooling for 400,000+ SKUs — ' +
+      'and work in TypeScript (Node, NestJS) and Laravel as well; Python (pandas, regex) covers data analysis and pipeline automation. ' +
       'Open to full-time, part-time, and project work—on-site, hybrid, or remote. ' +
-      'Based in Saint Petersburg; available for business travel and relocation.',
-    location: 'Saint Petersburg, Russia',
+      'Based in Almaty; available for business travel and relocation.',
+    location: 'Almaty, Kazakhstan',
     email: 'vasyapym@gmail.com',
     links: [
-      { label: 'Website', url: 'https://vasyapym.github.io' },
+      { label: 'GitHub', url: 'https://github.com/vasyapym' },
       { label: 'Telegram', url: 'https://t.me/vspmzx' },
       { label: 'WhatsApp', url: 'https://wa.me/79142760124' },
     ],
     skills: [
       { name: 'PHP 8', category: 'Languages' },
       { name: '1C-Bitrix (D7)', category: 'Backend' },
-      { name: 'MySQL', category: 'Databases' },
-      { name: 'SQL', category: 'Languages' },
-      { name: 'CommerceML (1C)', category: 'Backend' },
-      { name: 'Bitrix24 REST API', category: 'Backend' },
-      { name: 'REST API integrations', category: 'Backend' },
       { name: 'TypeScript', category: 'Languages' },
       { name: 'Python', category: 'Languages' },
       { name: 'Laravel', category: 'Backend' },
       { name: 'Symfony', category: 'Backend' },
       { name: 'PostgreSQL', category: 'Databases' },
+      { name: 'MySQL', category: 'Databases' },
+      { name: 'SQL', category: 'Languages' },
+      { name: 'CommerceML (1C)', category: 'Backend' },
+      { name: 'Bitrix24 REST API', category: 'Backend' },
+      { name: 'REST API integrations', category: 'Backend' },
       { name: 'Redis', category: 'Databases' },
       { name: 'Docker', category: 'DevOps' },
       { name: 'Linux', category: 'DevOps' },
@@ -37,9 +38,6 @@ export const profilesData = [
       { name: 'Git', category: 'Tools' },
       { name: 'GitLab', category: 'Tools' },
       { name: 'PHPUnit', category: 'Tools' },
-      { name: 'Lighthouse', category: 'Tools' },
-      { name: 'Claude Code', category: 'Tools' },
-      { name: 'Codex', category: 'Tools' },
     ],
     experience: [
       {
@@ -85,7 +83,7 @@ export const profilesData = [
         name: 'Digital Card API',
         description:
           'Digital business-card API built with NestJS and GraphQL, using Prisma and PostgreSQL for data persistence and Docker for containerization.',
-        url: 'https://vasyapym.onrender.com/graphql',
+        url: 'https://vasyapym.onrender.com/',
         repositoryUrl: 'https://github.com/vasyapym/digital-card-api',
         technologies: [
           'TypeScript',
@@ -94,6 +92,21 @@ export const profilesData = [
           'Prisma',
           'PostgreSQL',
           'Docker',
+        ],
+      },
+      {
+        name: 'vasyapym.github.io',
+        description:
+          'Personal portfolio and interactive-experiments site: eight self-contained projects with Go and Rust cores compiled to WebAssembly.',
+        url: 'https://vasyapym.github.io',
+        repositoryUrl: 'https://github.com/vasyapym/vasyapym.github.io',
+        technologies: [
+          'TypeScript',
+          'React',
+          'Go',
+          'Rust',
+          'WebAssembly',
+          'three.js',
         ],
       },
     ],
