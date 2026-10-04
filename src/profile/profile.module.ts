@@ -13,6 +13,6 @@ import { ProfileService } from './profile.service';
     ProfileCardView,
     { provide: CLOCK, useValue: systemClock },
   ],
-  exports: [ProfileCardView],
+  exports: [ProfileService, ProfileCardView],
 })
 export class ProfileModule {}
