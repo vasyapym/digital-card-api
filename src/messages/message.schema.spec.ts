@@ -18,6 +18,12 @@ describe('parseMessageBody', () => {
     expect(parseMessageBody({ email: 'a@b.co', message: 'x'.repeat(5001) })).toBeNull();
   });
 
+  it('accepts an empty email as anonymous', () => {
+    expect(parseMessageBody({ email: '', message: 'hi' })).toEqual({ email: '', message: 'hi', company: '' });
+    expect(parseMessageBody({ email: undefined, message: 'hi' })).toEqual({ email: '', message: 'hi', company: '' });
+    expect(parseMessageBody({ message: '  hi  ' })).toEqual({ email: '', message: 'hi', company: '' });
+  });
+
   it('keeps the honeypot value for the controller', () => {
     expect(parseMessageBody({ email: 'a@b.co', message: 'hi', company: 'bot filled' })?.company).toBe('bot filled');
   });

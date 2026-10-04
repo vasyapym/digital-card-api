@@ -27,6 +27,18 @@ describe('MailerService', () => {
     });
   });
 
+  it('sends an anonymous message without reply-to', async () => {
+    const transport = freshTransport();
+    const svc = service(transport);
+    await expect(svc.sendContactMessage('', 'Hello')).resolves.toBe(true);
+    expect(transport.sendMail).toHaveBeenCalledWith({
+      from: 'card@vasyapym.onrender.com',
+      to: 'vasyapym@gmail.com',
+      subject: 'Card message from the card',
+      text: 'From: (no email given)\n\nHello',
+    });
+  });
+
   it('reports false when SMTP is not configured', async () => {
     const transport = freshTransport();
     const svc = service(null);

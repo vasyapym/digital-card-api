@@ -196,12 +196,12 @@ ${tail ? `<p class="meta">${tail}</p>` : ''}
       status === 'sent'
         ? 'Sent — thank you, I’ll reply by email.'
         : status === 'error'
-          ? 'Couldn’t send. Please email me directly.'
+          ? 'Couldn’t send. Please try again, or copy my email from the top of the card.'
           : '';
     const cls = status ? ` ${status}` : '';
     const form = `<form action="/api/messages" method="post">
-<label>Email
-<input type="email" name="email" required placeholder="you@company.com" autocomplete="email"></label>
+<label>Your email (optional)
+<input type="email" name="email" placeholder="you@company.com" autocomplete="email"></label>
 <label>Message
 <textarea name="message" required rows="2" placeholder="A line or two about what&#39;s on your mind."></textarea></label>
 <div class="hp" aria-hidden="true"><label>Company<input type="text" name="company" tabindex="-1" autocomplete="off"></label></div>

@@ -1,7 +1,10 @@
 import { z } from 'zod';
 
 export const messageSchema = z.object({
-  email: z.string().trim().toLowerCase().max(254).email(),
+  email: z
+    .union([z.literal(''), z.string().trim().toLowerCase().max(254).email()])
+    .optional()
+    .default(''),
   message: z.string().trim().min(1).max(5000),
   company: z.string().optional().default(''),
 });

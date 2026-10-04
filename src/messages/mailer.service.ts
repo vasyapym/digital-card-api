@@ -21,13 +21,15 @@ export class MailerService {
       this.logger.warn('SMTP is not configured (SMTP_USER/SMTP_PASS) — contact message not sent');
       return false;
     }
+    const subject = fromEmail ? `Card message from ${fromEmail}` : 'Card message from the card';
+    const text = fromEmail ? `From: ${fromEmail}\n\n${message}` : `From: (no email given)\n\n${message}`;
     try {
       await this.transport.sendMail({
         from: user,
         to: OWNER_EMAIL,
-        replyTo: fromEmail,
-        subject: `Card message from ${fromEmail}`,
-        text: `From: ${fromEmail}\n\n${message}`,
+        ...(fromEmail ? { replyTo: fromEmail } : {}),
+        subject,
+        text,
       });
       return true;
     } catch (err) {

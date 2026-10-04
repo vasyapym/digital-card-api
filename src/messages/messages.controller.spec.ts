@@ -33,6 +33,14 @@ describe('MessagesController', () => {
     expect(redirect).toHaveBeenCalledWith(303, '/?sent=1');
   });
 
+  it('sends an anonymous message without an email', async () => {
+    const { res, redirect } = fakeRes();
+    (mailer.sendContactMessage as jest.Mock).mockResolvedValueOnce(true);
+    await controller.create({ email: '', message: 'hi' }, res);
+    expect(mailer.sendContactMessage).toHaveBeenCalledWith('', 'hi');
+    expect(redirect).toHaveBeenCalledWith(303, '/?sent=1');
+  });
+
   it('redirects to error when the mailer fails', async () => {
     const { res, redirect } = fakeRes();
     (mailer.sendContactMessage as jest.Mock).mockResolvedValueOnce(false);

@@ -90,6 +90,8 @@ describe('ProfileCardView', () => {
     expect(html).toContain('action="/api/messages"');
     expect(html).toContain('method="post"');
     expect(html).toContain('name="email"');
+    expect(html).toContain('Your email (optional)');
+    expect(html).not.toContain('name="email" required');
     expect(html).toContain('name="message"');
     expect(html).toContain('name="company"');
     expect(html).toContain('class="hp"');
