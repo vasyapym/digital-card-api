@@ -10,7 +10,7 @@ TypeScript · NestJS 11 · GraphQL (code-first, Apollo) · Prisma 6 · PostgreSQ
 
 ## How it runs
 
-- Render (free plan, Docker runtime, health check `/health`). Free instances sleep, so UptimeRobot pings `/health` every 5 minutes to keep it warm.
+- Render (free plan, Docker runtime, health check `/health`). Free instances sleep, so UptimeRobot keeps it warm with a HEAD request every 5 minutes.
 - PostgreSQL is hosted on Neon. `DATABASE_URL` uses the pooled connection, `DIRECT_URL` the direct one (validated at startup with zod, fail-fast).
 - Startup chain in the container: `check-env → prisma migrate deploy → seed → server`. Any failed step prevents boot.
 - `src/data/profiles.data.ts` is the single source of truth for the card content. On every start the seed replaces the database state with this file (upserts inside one transaction under an advisory lock).
