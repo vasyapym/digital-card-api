@@ -7,9 +7,9 @@ export const profilesData = [
     name: 'Vasily Argounov',
     title: 'Backend Developer · PHP 8 / 1C-Bitrix · TypeScript · Python',
     description:
-      'I build e-commerce backends on PHP 8 and 1C-Bitrix (D7) — 1C integrations, SQL performance, catalog tooling for 400,000+ SKUs — ' +
+      'I build e-commerce backends on PHP 8 and 1C-Bitrix (D7) - 1C integrations, SQL performance, catalog tooling for 400,000+ SKUs - ' +
       'and work in TypeScript (Node, NestJS) and Laravel as well; Python (pandas, regex) covers data analysis and pipeline automation. ' +
-      'Open to full-time, part-time, and project work—on-site, hybrid, or remote. ' +
+      'Open to full-time, part-time, and project work - on-site, hybrid, or remote. ' +
       'Based in Almaty; available for business travel and relocation.',
     location: 'Almaty, Kazakhstan',
     email: 'vasyapym@gmail.com',
@@ -68,7 +68,7 @@ export const profilesData = [
         ],
       },
       {
-        company: 'North-Eastern Federal University — Arctic Linguistic Ecology Lab',
+        company: 'North-Eastern Federal University - Arctic Linguistic Ecology Lab',
         position: 'Junior Researcher',
         startDate: '2021-01-01',
         endDate: '2024-08-31',
