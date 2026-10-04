@@ -5,7 +5,7 @@ export const profilesData = [
     slug: 'vasily-argunov',
     isPrimary: true,
     name: 'Vasily Argounov',
-    title: 'Backend Developer · PHP 8 / 1C-Bitrix',
+    title: 'Backend Developer · PHP 8 / 1C-Bitrix · TypeScript · Python',
     description:
       'I build e-commerce backends on PHP 8 and 1C-Bitrix (D7) — 1C integrations, SQL performance, catalog tooling for 400,000+ SKUs — ' +
       'and work in TypeScript (Node, NestJS) and Laravel as well; Python (pandas, regex) covers data analysis and pipeline automation. ' +
