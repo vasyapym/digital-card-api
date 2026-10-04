@@ -4,7 +4,7 @@ export const profilesData = [
   {
     slug: 'vasily-argunov',
     isPrimary: true,
-    name: 'Vasily Argunov',
+    name: 'Vasily Argounov',
     title: 'Backend Developer · PHP 8 / 1C-Bitrix',
     description:
       'I build e-commerce backends on PHP 8 and 1C-Bitrix (D7) — 1C integrations, SQL performance, catalog tooling for 400,000+ SKUs — ' +
