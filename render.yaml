@@ -11,3 +11,7 @@ services:
         sync: false
       - key: DIRECT_URL
         sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false

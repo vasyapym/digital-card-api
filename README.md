@@ -14,6 +14,7 @@ TypeScript · NestJS 11 · GraphQL (code-first, Apollo) · Prisma 6 · PostgreSQ
 - PostgreSQL is hosted on Neon. `DATABASE_URL` uses the pooled connection, `DIRECT_URL` the direct one (validated at startup with zod, fail-fast).
 - Startup chain in the container: `check-env → prisma migrate deploy → seed → server`. Any failed step prevents boot.
 - `src/data/profiles.data.ts` is the single source of truth for the card content. On every start the seed replaces the database state with this file (upserts inside one transaction under an advisory lock). Edit the file, push — Render rebuilds, the DB follows.
+- The Contact form on the card POSTs to `/api/messages`, which forwards the message to the owner's email over SMTP (Gmail app password; set `SMTP_USER` / `SMTP_PASS` as Render secrets — without them the form answers with an error note).
 
 ## Local run
 

@@ -6,6 +6,7 @@ import { GraphQLModule } from '@nestjs/graphql';
 import { AppController } from './app.controller';
 import { validateEnv } from './config/env';
 import { HealthController } from './health/health.controller';
+import { MessagesModule } from './messages/messages.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ProfileModule } from './profile/profile.module';
 
@@ -22,6 +23,7 @@ import { ProfileModule } from './profile/profile.module';
     }),
     PrismaModule,
     ProfileModule,
+    MessagesModule,
   ],
   controllers: [AppController, HealthController],
 })
