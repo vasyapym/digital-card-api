@@ -97,6 +97,11 @@ describe('ProfileCardView', () => {
     expect(html).toContain('class="hp"');
   });
 
+  it('drops iOS focus auto-zoom: fields hit 16px under coarse pointers', () => {
+    const html = view.render(base);
+    expect(html).toContain('@media (any-pointer:coarse){input,textarea{font-size:16px}}');
+  });
+
   it('renders the status note only when a status is passed', () => {
     expect(view.render(base)).not.toContain('class="note sent"');
     expect(view.render(base, 'sent')).toContain('class="note sent"');

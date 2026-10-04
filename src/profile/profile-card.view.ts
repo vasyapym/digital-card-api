@@ -72,6 +72,8 @@ button:hover{opacity:.85}
 .note.sent{color:var(--ok)}
 .note.error{color:var(--err)}
 
+@media (any-pointer:coarse){input,textarea{font-size:16px}}
+
 @media (prefers-reduced-motion:no-preference){
   a,button,input,textarea{transition:color .15s,background-color .15s,border-color .15s,text-decoration-color .15s,opacity .15s}
 }
