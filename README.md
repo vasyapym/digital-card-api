@@ -1,6 +1,6 @@
 # Digital Card API
 
-Read-only GraphQL API behind my digital business card: profile, links, skills (filterable by category), experience (computed `isCurrent` and `durationInMonths`), and projects. A zero-dependency server-rendered HTML card lives at `/`.
+Read-only GraphQL API behind my digital business card: profile, links, skills (filterable by category), experience (computed `isCurrent` and `durationInMonths`), and projects.
 
 Live: https://vasyapym.onrender.com — API sandbox: https://vasyapym.onrender.com/graphql — Health: https://vasyapym.onrender.com/health
 
@@ -10,11 +10,11 @@ TypeScript · NestJS 11 · GraphQL (code-first, Apollo) · Prisma 6 · PostgreSQ
 
 ## How it runs
 
-- Render (free plan, Docker runtime, health check `/health`). Free instances sleep, so the first request may take up to a minute; UptimeRobot pings `/health` every 5 minutes to keep it warm.
+- Render (free plan, Docker runtime, health check `/health`). Free instances sleep, so UptimeRobot pings `/health` every 5 minutes to keep it warm.
 - PostgreSQL is hosted on Neon. `DATABASE_URL` uses the pooled connection, `DIRECT_URL` the direct one (validated at startup with zod, fail-fast).
 - Startup chain in the container: `check-env → prisma migrate deploy → seed → server`. Any failed step prevents boot.
-- `src/data/profiles.data.ts` is the single source of truth for the card content. On every start the seed replaces the database state with this file (upserts inside one transaction under an advisory lock). Edit the file, push — Render rebuilds, the DB follows.
-- The Contact form on the card POSTs to `/api/messages`, which forwards the message to the owner's email over SMTP (Gmail app password; set `SMTP_USER` / `SMTP_PASS` as Render secrets — without them the form answers with an error note).
+- `src/data/profiles.data.ts` is the single source of truth for the card content. On every start the seed replaces the database state with this file (upserts inside one transaction under an advisory lock).
+- The Contact form on the card POSTs to `/api/messages`, which forwards the message to the owner's email over SMTP (Gmail app password; set `SMTP_USER` / `SMTP_PASS` as Render secrets).
 
 ## Local run
 
