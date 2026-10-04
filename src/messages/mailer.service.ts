@@ -1,31 +1,56 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { createTransport } from 'nodemailer';
 import { Env } from '../config/env';
-import { MailTransport, MAIL_TRANSPORT } from './mail.transport';
+import { MailMessage, MailTransport, MAIL_TRANSPORT } from './mail.transport';
 
 const OWNER_EMAIL = 'vasyapym@gmail.com';
+const MAIL_FROM = 'onboarding@resend.dev';
+const RESEND_ENDPOINT = 'https://api.resend.com/emails';
+const RESEND_TIMEOUT_MS = 10_000;
+
+export class ResendMailTransport implements MailTransport {
+  constructor(private readonly apiKey: string) {}
+
+  async sendMail(message: MailMessage): Promise<unknown> {
+    const response = await fetch(RESEND_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${this.apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: message.from,
+        to: [message.to],
+        ...(message.replyTo ? { reply_to: message.replyTo } : {}),
+        subject: message.subject,
+        text: message.text,
+      }),
+      signal: AbortSignal.timeout(RESEND_TIMEOUT_MS),
+    });
+    if (!response.ok) {
+      const detail = await response.text().catch(() => '');
+      throw new Error(`Resend responded ${response.status}: ${detail.slice(0, 500)}`);
+    }
+    return response.json().catch(() => null);
+  }
+}
 
 @Injectable()
 export class MailerService {
   private readonly logger = new Logger(MailerService.name);
 
-  constructor(
-    private readonly config: ConfigService<Env, true>,
-    @Inject(MAIL_TRANSPORT) private readonly transport: MailTransport | null,
-  ) {}
+  constructor(@Inject(MAIL_TRANSPORT) private readonly transport: MailTransport | null) {}
 
   async sendContactMessage(fromEmail: string, message: string): Promise<boolean> {
-    const user = this.config.get('SMTP_USER', { infer: true });
-    if (!this.transport || !user) {
-      this.logger.warn('SMTP is not configured (SMTP_USER/SMTP_PASS) — contact message not sent');
+    if (!this.transport) {
+      this.logger.warn('Email is not configured (RESEND_API_KEY) — contact message not sent');
       return false;
     }
     const subject = fromEmail ? `Card message from ${fromEmail}` : 'Card message from the card';
     const text = fromEmail ? `From: ${fromEmail}\n\n${message}` : `From: (no email given)\n\n${message}`;
     try {
       await this.transport.sendMail({
-        from: user,
+        from: MAIL_FROM,
         to: OWNER_EMAIL,
         ...(fromEmail ? { replyTo: fromEmail } : {}),
         subject,
@@ -43,11 +68,8 @@ export const mailTransportFactory = {
   provide: MAIL_TRANSPORT,
   inject: [ConfigService],
   useFactory: (config: ConfigService<Env, true>): MailTransport | null => {
-    const user = config.get('SMTP_USER', { infer: true });
-    const pass = config.get('SMTP_PASS', { infer: true });
-    if (!user || !pass) return null;
-    const host = config.get('SMTP_HOST', { infer: true }) ?? 'smtp.gmail.com';
-    const port = config.get('SMTP_PORT', { infer: true }) ?? 465;
-    return createTransport({ host, port, secure: port === 465, auth: { user, pass } });
+    const apiKey = config.get('RESEND_API_KEY', { infer: true })?.trim();
+    if (!apiKey) return null;
+    return new ResendMailTransport(apiKey);
   },
 };
