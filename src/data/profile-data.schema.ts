@@ -25,6 +25,7 @@ const experienceSchema = z
     position: nonEmpty,
     startDate: date,
     endDate: date.optional(),
+    description: z.string().optional(),
     achievements: z.array(nonEmpty).default([]),
   })
   .refine((e) => e.endDate === undefined || e.endDate >= e.startDate, {

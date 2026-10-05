@@ -26,6 +26,7 @@ const record: ProfileRecord = {
       company: 'C',
       position: 'P',
       achievements: ['a1'],
+      description: null,
       startDate: parseDate('2024-01-01'),
       endDate: null,
       sortOrder: 0,

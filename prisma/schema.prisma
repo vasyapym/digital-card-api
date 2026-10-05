@@ -54,6 +54,7 @@ model Experience {
   position     String
   startDate    DateTime  @db.Date
   endDate      DateTime? @db.Date
+  description  String?
   achievements String[]
   sortOrder    Int       @default(0)
   profileId    Int

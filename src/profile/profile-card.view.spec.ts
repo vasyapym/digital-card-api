@@ -18,6 +18,7 @@ const base: Profile = {
       startDate: new Date('2025-12-01'),
       endDate: null,
       achievements: ['Integrated 1C and the website via CommerceML.'],
+      description: 'Industrial parts distributor, 400,000+ SKUs.',
       isCurrent: true,
       durationInMonths: 11,
     },
@@ -70,6 +71,19 @@ describe('ProfileCardView', () => {
     expect(html).toContain('11 mo');
   });
 
+  it('renders the experience row company-first with the org description under the meta', () => {
+    const html = view.render(base);
+    expect(html).toContain('<h3>Traktorodetal Group<span class="org"> · Backend Developer</span></h3>');
+    expect(html).toContain('<p class="desc">Industrial parts distributor, 400,000+ SKUs.</p>');
+    expect(html).toContain('<h2 id="experience-h">Work</h2>');
+  });
+
+  it('renders the profile description as separate paragraphs', () => {
+    const html = view.render({ ...base, description: 'First paragraph.\n\nSecond paragraph.' });
+    expect(html).toContain('white-space:pre-line');
+    expect(html).toContain('First paragraph.\n\nSecond paragraph.');
+  });
+
   it('renders achievements, project technologies and repo links', () => {
     const html = view.render(base);
     expect(html).toContain('Integrated 1C and the website via CommerceML.');
@@ -113,7 +127,7 @@ describe('ProfileCardView', () => {
     const html = view.render({ ...base, links: [], skills: [], experience: [], projects: [] });
     expect(html).not.toContain('Links</h2>');
     expect(html).not.toContain('Skills</h2>');
-    expect(html).not.toContain('Experience</h2>');
+    expect(html).not.toContain('Work</h2>');
     expect(html).not.toContain('Projects</h2>');
     expect(html).toContain('Contact</h2>');
     expect(html).toContain('mailto:');

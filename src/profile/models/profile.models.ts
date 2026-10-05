@@ -35,6 +35,9 @@ export class Experience {
   @Field(() => [String])
   achievements!: string[];
 
+  @Field(() => String, { nullable: true })
+  description!: string | null;
+
   @Field({ description: 'Работаю здесь сейчас' })
   isCurrent!: boolean;
 

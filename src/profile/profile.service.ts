@@ -49,6 +49,7 @@ export class ProfileService {
         startDate: e.startDate,
         endDate: e.endDate,
         achievements: e.achievements,
+        description: e.description,
         isCurrent: isCurrentExperience(e, now),
         durationInMonths: durationInMonths(e, now),
       })),

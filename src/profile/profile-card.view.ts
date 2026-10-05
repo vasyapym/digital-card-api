@@ -42,7 +42,7 @@ h1{font-size:var(--t-xl);font-weight:600;line-height:1.2;letter-spacing:-.01em}
 .meta{font-size:var(--t-sm);line-height:1.5;color:var(--fg-2)}
 .meta a{color:inherit}
 .self{margin-top:var(--s2)}
-.lede{margin-top:var(--s6);font-size:var(--t-lg);line-height:1.55;max-width:60ch}
+.lede{margin-top:var(--s6);font-size:var(--t-lg);line-height:1.55;max-width:60ch;white-space:pre-line}
 
 .row{display:flex;flex-wrap:wrap;gap:var(--s2) var(--s6)}
 .pills{display:flex;flex-wrap:wrap;gap:var(--s2)}
@@ -161,13 +161,14 @@ ${p.description ? `<p class="lede">${e(p.description)}</p>` : ''}
           ? `<ul class="ach">${x.achievements.map((a) => `<li>${e(a)}</li>`).join('')}</ul>`
           : '';
         return `<article>
-<h3>${e(x.position)}<span class="org"> · ${e(x.company)}</span></h3>
+<h3>${e(x.company)}<span class="org"> · ${e(x.position)}</span></h3>
 <p class="meta">${e(meta)}</p>
+${x.description ? `<p class="desc">${e(x.description)}</p>` : ''}
 ${ach}
 </article>`;
       })
       .join('');
-    return this.section('experience', 'Experience', `<div class="stack">${body}</div>`);
+    return this.section('experience', 'Work', `<div class="stack">${body}</div>`);
   }
 
   private renderProjects(items: Project[] | null | undefined): string {

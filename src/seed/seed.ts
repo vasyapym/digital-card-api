@@ -58,6 +58,7 @@ async function main(): Promise<void> {
               company: e.company,
               position: e.position,
               achievements: e.achievements,
+              description: e.description ?? null,
               startDate: parseDate(e.startDate),
               endDate: e.endDate ? parseDate(e.endDate) : null,
             })),
