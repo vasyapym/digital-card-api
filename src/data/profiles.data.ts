@@ -6,11 +6,11 @@ export const profilesData = [
     isPrimary: true,
     name: 'Vasily Argounov',
     title: 'Backend Developer · PHP 8 / 1C-Bitrix · TypeScript · Python',
-    description:
-      'I build e-commerce backends on PHP 8 and 1C-Bitrix (D7) - 1C integrations, SQL performance, catalog tooling for 400,000+ SKUs - ' +
-      'and work in TypeScript (Node, NestJS) and Laravel as well; Python (pandas, regex) covers data analysis and pipeline automation. ' +
-      'Open to full-time, part-time, and project work - on-site, hybrid, or remote. ' +
-      'Based in Almaty; available for business travel and relocation.',
+    description: [
+      'I build e-commerce backends on PHP 8 and 1C-Bitrix (D7) - 1C integrations, SQL performance, catalog tooling for 400,000+ SKUs - and work in TypeScript (Node, NestJS) and Laravel as well.',
+      'Before that, I spent three and a half years as a researcher in computational linguistics, processing large text corpora in Python.',
+      "I'm open to full-time, part-time, and project work, in any format (on-site, hybrid, remote). Based in Almaty, happy to travel or relocate.",
+    ].join('\n\n'),
     location: 'Almaty, Kazakhstan',
     email: 'vasyapym@gmail.com',
     links: [
@@ -44,14 +44,15 @@ export const profilesData = [
         company: 'Traktorodetal Group',
         position: 'Backend Developer',
         startDate: '2025-12-01',
+        description: 'Industrial parts distributor, 400,000+ SKUs.',
         achievements: [
-          'Integrated 1C and the website via CommerceML to synchronize catalog data, stock levels, and prices.',
-          'Built product mapping for the customer account area, covering 400,000+ items across 250+ categories.',
-          'Resolved N+1 query issues and optimized slow pagination COUNT queries across the site.',
-          'Developed PHP modules for smart filters, bulk photo uploads matched by 1C code, and catalog property management.',
-          'Created admin audit tools to check catalog data completeness across 30,000+ items.',
-          'Added IP-based geolocation and connected website forms to Bitrix24 CRM through its REST API.',
-          'Introduced an AI-agent-assisted development workflow with code review, security audits, and a YAGNI policy.',
+          '1C ↔ website sync over CommerceML: catalog, stock, prices',
+          'Product mapping for the customer account area (400k+ items, 250+ categories)',
+          'Fixed N+1 queries and slow pagination COUNTs across the site',
+          'PHP modules for smart filters, bulk photo upload by 1C code, catalog property management',
+          'Admin audit tools for catalog data completeness (30k+ items)',
+          'IP geolocation; site forms → Bitrix24 CRM via REST',
+          'Rolled out an AI-agent-assisted workflow to the team',
         ],
       },
       {
@@ -59,22 +60,23 @@ export const profilesData = [
         position: 'Web Developer',
         startDate: '2024-09-01',
         endDate: '2025-12-31',
+        description: 'Optics manufacturer; several international storefronts on 1C-Bitrix.',
         achievements: [
-          'Optimized homepage performance: 2,445 ms → 1,432 ms (−41%), page weight −37%, and JavaScript files 23 → 13.',
-          'Reduced product-page weight by 50% and server requests by 21%.',
-          'Removed redundant SQL queries and added caching for expensive page blocks.',
-          'Implemented generation of H1–H3 headings, title tags, and meta descriptions across multiple group websites.',
-          'Developed templates and components for four 1C-Bitrix websites within an international optics group.',
+          'Homepage: 2,445 ms → 1,432 ms (−41%), page weight −37%, JS files 23 → 13',
+          'Product page: weight −50%, server requests −21%',
+          'Removed redundant SQL, added caching for heavy blocks',
+          'Metadata generation system (H1–H3, Title, Description) for several group sites',
+          'Templates and components for four sites',
         ],
       },
       {
-        company: 'North-Eastern Federal University - Arctic Linguistic Ecology Lab',
+        company: 'NEFU, Arctic Linguistic Ecology Lab',
         position: 'Junior Researcher',
         startDate: '2021-01-01',
         endDate: '2024-08-31',
         achievements: [
-          'Conducted quantitative analysis of large text corpora using Python, pandas, and regular expressions.',
-          'Automated parsing, cleaning, and computation across large datasets for linguistic research.',
+          'Quantitative corpus analysis in Python (pandas, regex)',
+          'Automated parsing, cleaning, and computation over large datasets',
         ],
       },
     ],
