@@ -84,7 +84,7 @@ export const profilesData = [
       {
         name: 'Digital Card API',
         description:
-          'Digital business-card API built with NestJS and GraphQL, using Prisma and PostgreSQL for data persistence and Docker for containerization.',
+          'Built with NestJS and GraphQL, using Prisma and PostgreSQL for data persistence and Docker for containerization.',
         url: 'https://vasyapym.onrender.com/',
         repositoryUrl: 'https://github.com/vasyapym/digital-card-api',
         technologies: [
@@ -99,7 +99,7 @@ export const profilesData = [
       {
         name: 'vasyapym.github.io',
         description:
-          'Personal portfolio and interactive-experiments site: eight self-contained projects with Go and Rust cores compiled to WebAssembly.',
+          'Eight self-contained projects with Go and Rust cores compiled to WebAssembly.',
         url: 'https://vasyapym.github.io',
         repositoryUrl: 'https://github.com/vasyapym/vasyapym.github.io',
         technologies: [

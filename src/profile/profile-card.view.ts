@@ -206,7 +206,7 @@ ${tail ? `<p class="meta">${tail}</p>` : ''}
 <label>Your email (optional)
 <input type="email" name="email" placeholder="you@company.com" autocomplete="email"></label>
 <label>Message
-<textarea name="message" required rows="2" placeholder="A line or two about what&#39;s on your mind."></textarea></label>
+<textarea name="message" required rows="2" placeholder="A line or two"></textarea></label>
 <div class="hp" aria-hidden="true"><label>Company<input type="text" name="company" tabindex="-1" autocomplete="off"></label></div>
 <div class="actions">
 <button type="submit">Send message</button>
