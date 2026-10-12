@@ -9,3 +9,9 @@ coverage/
 schema.gql
 .agent/
 .project-history/
+# second brain: model binaries are baked at build time, never committed
+/models/
+models/
+.cache/huggingface/
+.huggingface/
+*.onnx

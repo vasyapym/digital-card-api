@@ -9,6 +9,9 @@ ENV CHECKPOINT_DISABLE=1 \
     PRISMA_HIDE_UPDATE_MESSAGE=1
 
 FROM base AS build
+ENV ONNXRUNTIME_NODE_INSTALL=skip \
+    ONNXRUNTIME_NODE_INSTALL_CUDA=skip \
+    BRAIN_MODEL_DIR=/app/models
 COPY package.json package-lock.json ./
 COPY prisma ./prisma
 RUN npm ci
@@ -19,13 +22,18 @@ RUN npx prisma generate \
  && npm run build
 RUN npm prune --omit=dev \
  && npx prisma generate
+# Bakes the pinned embedding model into the image (~120 MB with ORT + sharp — accepted).
+# Set BRAIN_MODEL_STRICT=1 once REVISION/ONNX_SHA256 are pinned to make drift fatal.
+RUN node dist/second-brain/embedding/fetch-model.js
 
 FROM base AS runtime
-ENV NODE_ENV=production
+ENV NODE_ENV=production \
+    BRAIN_MODEL_DIR=/app/models
 COPY --from=build /app/package.json ./package.json
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY --from=build /app/prisma ./prisma
+COPY --from=build /app/models ./models
 
 USER node
 EXPOSE 3000
