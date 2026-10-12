@@ -28,6 +28,7 @@ function fakeRes(): { header: Record<string, string>; res: Response } {
 describe('AppController GET /', () => {
   let controller: AppController;
   const render = jest.fn();
+  const getProfile = jest.fn();
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -35,7 +36,7 @@ describe('AppController GET /', () => {
     })
       .useMocker((token) => {
         render.mockReturnValue('card-html');
-        if (token === ProfileService) return { getProfile: () => Promise.resolve(profile) };
+        if (token === ProfileService) return { getProfile: getProfile.mockResolvedValue(profile) };
         if (token === ProfileCardView) return { render };
         return jest.fn();
       })
@@ -64,5 +65,12 @@ describe('AppController GET /', () => {
     await controller.card(undefined, '1', res);
     expect(render).toHaveBeenLastCalledWith(profile, 'error');
     expect(header['Cache-Control']).toBe('no-store');
+  });
+
+  it('HEAD / не доходит ни до профиля, ни до базы', async () => {
+    await controller.card(undefined, undefined, fakeRes().res);
+    getProfile.mockClear();
+    expect(controller.probe()).toBeUndefined();
+    expect(getProfile).not.toHaveBeenCalled();
   });
 });

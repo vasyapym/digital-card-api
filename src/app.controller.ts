@@ -1,4 +1,4 @@
-import { Controller, Get, Query, Res } from '@nestjs/common';
+import { Controller, Get, Head, Query, Res } from '@nestjs/common';
 import type { Response } from 'express';
 import { ProfileService } from './profile/profile.service';
 import { ProfileCardView } from './profile/profile-card.view';
@@ -24,4 +24,9 @@ export class AppController {
     res.setHeader('Cache-Control', 'public, max-age=300');
     return this.profileCardView.render(profile);
   }
+
+  /** Проба живости без рендера и без похода в базу — на случай,
+   *  если какой-то монитор будет смотреть в корень. */
+  @Head()
+  probe(): void {}
 }

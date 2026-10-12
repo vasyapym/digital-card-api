@@ -5,8 +5,16 @@ import { PrismaService } from '../prisma/prisma.service';
 export class HealthController {
   constructor(private readonly prisma: PrismaService) {}
 
+  /** Живость процесса: ни UptimeRobot, ни Render health check не должны
+   *  будить базу — Postgres остаётся усыплённым между реальными запросами. */
   @Get()
-  async check(): Promise<{ status: 'ok'; db: 'up' }> {
+  check(): { status: 'ok' } {
+    return { status: 'ok' };
+  }
+
+  /** Ручная проверка доступности базы. Не для мониторинга. */
+  @Get('db')
+  async checkDb(): Promise<{ status: 'ok'; db: 'up' }> {
     try {
       await this.prisma.$queryRaw`SELECT 1`;
       return { status: 'ok', db: 'up' };
