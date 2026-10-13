@@ -10,10 +10,18 @@ TypeScript · NestJS 11 · GraphQL (code-first, Apollo) · Prisma 6 · PostgreSQ
 
 ## How it runs
 
-- Render (free plan, Docker runtime, health check `/health`). Free instances sleep, so UptimeRobot keeps it warm with a HEAD request to `/health` every 5 minutes. `/health` is process-only: it never touches Postgres, so keep-alive pings leave the Neon compute scaled to zero. `/health/db` runs a real database check — for manual use, not for monitors. `HEAD /` is also database-free.
+- Render (free plan, Docker runtime, health check `/health`). Free instances sleep, so UptimeRobot keeps it warm with a HEAD request to `/graphql` every 5 minutes (DB-free, so Neon still scales to zero); `/health` stays process-only and `/health/db` is for manual checks only. `HEAD /` is also database-free.
 - PostgreSQL is hosted on Neon. `DATABASE_URL` uses the pooled connection, `DIRECT_URL` the direct one (validated at startup with zod, fail-fast).
 - Startup chain in the container: `check-env → prisma migrate deploy → seed → server`. Any failed step prevents boot.
 - `src/data/profiles.data.ts` is the single source of truth for the card content.
+
+## Second brain (M2 indexer)
+
+- `src/second-brain/` — a private, read-only window over an Obsidian vault, built in milestones (M0 deps/flags, M1 migration, M2 indexer, M3 web). With `BRAIN_ENABLED=false` (the default) nothing registers and the card behaves exactly as before.
+- The indexer is a standalone CLI (`dist/second-brain/indexer/cli.js`) run by a workflow in the private vault repo. The public repo never sees vault names or paths; fixtures are synthetic; logs print counts only.
+- Embeddings come from a pinned, sha256-verified `Xenova/multilingual-e5-small`, baked into the image at build; the signature stored in `brain_meta` gates semantic search.
+- Migration discipline: new migrations are created with `prisma migrate dev --create-only` and reviewed by hand; `migrations.lint.spec` fails the build if a later migration drops or alters the generated `tsv`, the HNSW or the tsv-GIN objects.
+- No screenshots of real content, ever.
 
 ## Local run
 
