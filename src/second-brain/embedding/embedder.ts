@@ -22,7 +22,7 @@ export class BatchingEmbedder implements PassageEmbedder {
     const out: number[][] = [];
     for (let i = 0; i < texts.length; i += BATCH_SIZE) {
       const vectors = await this.backend(texts.slice(i, i + BATCH_SIZE));
-      out.push(...vectors);
+      for (const v of vectors) out.push(v); // loop push: no argument-count limits
     }
     return out;
   }

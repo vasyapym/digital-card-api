@@ -19,7 +19,10 @@ import { applyExcludes } from './vault-files';
 
 function fail(err: unknown): void {
   const red = redactError(err);
-  console.error(`index: error name=${red.name} code=${red.code ?? ''}`);
+  // RangeError/TypeError messages are engine phrases ("Maximum call stack size
+  // exceeded") — safe to print; they never carry vault content.
+  const extra = err instanceof RangeError || err instanceof TypeError ? err.message : '';
+  console.error(`index: error name=${red.name} code=${red.code ?? ''}${extra ? ' ' + extra : ''}`);
   process.exit(1);
 }
 

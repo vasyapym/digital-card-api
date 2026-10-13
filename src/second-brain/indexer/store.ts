@@ -72,9 +72,11 @@ export async function storeNote(
     );
 
     await tx.$executeRawUnsafe('DELETE FROM brain_chunks WHERE note_id = $1', note.id);
-    if (note.chunks.length > 0) {
+    const CHUNKS_PER_STATEMENT = 128; // bound params per statement, no argument-spread blowups
+    for (let c = 0; c < note.chunks.length; c += CHUNKS_PER_STATEMENT) {
+      const slice = note.chunks.slice(c, c + CHUNKS_PER_STATEMENT);
       const params: unknown[] = [];
-      const rows = note.chunks.map((chunk, i) => {
+      const rows = slice.map((chunk, i) => {
         const b = params.length;
         params.push(
           note.id,
@@ -82,7 +84,7 @@ export async function storeNote(
           chunk.heading,
           chunk.anchor,
           chunk.text,
-          vectorText(note.embeddings[i]),
+          vectorText(note.embeddings[c + i]),
         );
         return `($${b + 1}, $${b + 2}, $${b + 3}, $${b + 4}, $${b + 5}, $${b + 6}::vector)`;
       });
