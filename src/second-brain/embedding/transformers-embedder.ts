@@ -86,14 +86,14 @@ export async function loadCountTokens(): Promise<(text: string) => number> {
   try {
     const tokenizer = await transformers.AutoTokenizer.from_pretrained(MODEL_ID);
     return (text: string) => {
-      // encode() may return { input_ids: Tensor } or { input_ids: number[] } — count both.
-      const enc = tokenizer.encode(text) as { input_ids?: unknown };
-      const ids = enc.input_ids;
-      const n = Array.isArray(ids)
-        ? ids.length
-        : ids && typeof ids === 'object'
-          ? ((ids as { data?: unknown[] }).data?.length ?? 0)
-          : 0;
+      // transformers.js encode() returns a plain number[] of token ids; older
+      // shapes ({ input_ids: number[] | Tensor }) are covered defensively.
+      const enc = tokenizer.encode(text) as unknown;
+      const ids: unknown = Array.isArray(enc) ? enc : (enc as { input_ids?: unknown })?.input_ids;
+      const list: readonly unknown[] | undefined = Array.isArray(ids)
+        ? ids
+        : (ids as { data?: readonly unknown[] } | undefined)?.data;
+      const n = list?.length ?? 0;
       if (n === 0) throw new Error('tokenizer failed');
       return n;
     };
