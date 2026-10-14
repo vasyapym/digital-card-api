@@ -21,7 +21,7 @@ jobs:
       - uses: actions/checkout@v4
         with: { path: vault, fetch-depth: 0, filter: 'blob:none' }
       - uses: actions/checkout@v4
-        with: { repository: vasyapym/obsidian-second-brain, ref: v1.0.1, path: tools, persist-credentials: false }
+        with: { repository: vasyapym/quiet-index, ref: v1.0.1, path: tools, persist-credentials: false }
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: npm, cache-dependency-path: tools/package-lock.json }
       - working-directory: tools

@@ -35,7 +35,7 @@ const base: Profile = {
       name: 'Digital Card API',
       description: 'Digital business-card API.',
       url: 'https://vasyapym.onrender.com/',
-      repositoryUrl: 'https://github.com/vasyapym/obsidian-second-brain',
+      repositoryUrl: 'https://github.com/vasyapym/quiet-index',
       technologies: ['TypeScript', 'NestJS'],
     },
   ],

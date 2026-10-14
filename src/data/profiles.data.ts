@@ -82,11 +82,11 @@ export const profilesData = [
     ],
     projects: [
       {
-        name: 'Obsidian Second Brain',
+        name: 'quiet-index',
         description:
           'Obsidian vault, searchable from any device by keywords and by meaning - indexed in CI by a pinned local model.',
-        url: 'https://github.com/vasyapym/obsidian-second-brain',
-        repositoryUrl: 'https://github.com/vasyapym/obsidian-second-brain',
+        url: 'https://github.com/vasyapym/quiet-index',
+        repositoryUrl: 'https://github.com/vasyapym/quiet-index',
         technologies: [
           'TypeScript',
           'PostgreSQL',

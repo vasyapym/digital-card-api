@@ -1,5 +1,5 @@
 {
-  "name": "obsidian-second-brain",
+  "name": "quiet-index",
   "version": "1.0.0",
   "private": true,
   "description": "Self-hosted keyword and semantic search over an Obsidian vault, plus the read-only GraphQL API of a digital business card",
