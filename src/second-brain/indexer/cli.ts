@@ -20,8 +20,12 @@ import { applyExcludes } from './vault-files';
 function fail(err: unknown): void {
   const red = redactError(err);
   // RangeError/TypeError messages are engine phrases ("Maximum call stack size
-  // exceeded") — safe to print; they never carry vault content.
-  const extra = err instanceof RangeError || err instanceof TypeError ? err.message : '';
+  // exceeded") — safe to print. Stack frames resolve to OUR dist files only, never
+  // at vault content; print three frames so engine-limit bugs are locatable.
+  const extra =
+    err instanceof RangeError || err instanceof TypeError
+      ? err.message + ' at ' + String((err as Error).stack || '').split('\n').slice(1, 4).join(' | ')
+      : '';
   console.error(`index: error name=${red.name} code=${red.code ?? ''}${extra ? ' ' + extra : ''}`);
   process.exit(1);
 }
