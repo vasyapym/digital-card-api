@@ -82,18 +82,17 @@ export const profilesData = [
     ],
     projects: [
       {
-        name: 'Digital Card API',
+        name: 'Obsidian Second Brain',
         description:
-          'Built with NestJS and GraphQL, using Prisma and PostgreSQL for data persistence and Docker for containerization.',
-        url: 'https://vasyapym.onrender.com/',
-        repositoryUrl: 'https://github.com/vasyapym/digital-card-api',
+          'My Obsidian vault, searchable from any device by keywords and by meaning — indexed in CI by a pinned local model, no AI provider.',
+        url: 'https://github.com/vasyapym/obsidian-second-brain',
+        repositoryUrl: 'https://github.com/vasyapym/obsidian-second-brain',
         technologies: [
+          'Obsidian',
           'TypeScript',
-          'NestJS',
-          'GraphQL',
-          'Prisma',
+          'GitHub Actions',
           'PostgreSQL',
-          'Docker',
+          'pgvector',
         ],
       },
       {
@@ -109,6 +108,21 @@ export const profilesData = [
           'Rust',
           'WebAssembly',
           'three.js',
+        ],
+      },
+      {
+        name: 'Digital Card API',
+        description:
+          'Prisma and PostgreSQL for data persistence and Docker for containerization.',
+        url: 'https://vasyapym.onrender.com/',
+        repositoryUrl: 'https://github.com/vasyapym/obsidian-second-brain',
+        technologies: [
+          'TypeScript',
+          'NestJS',
+          'GraphQL',
+          'Prisma',
+          'PostgreSQL',
+          'Docker',
         ],
       },
     ],

@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: digital-card-api
+    name: vasyapym
     runtime: docker
     plan: free
     healthCheckPath: /health
