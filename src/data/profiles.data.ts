@@ -90,7 +90,6 @@ export const profilesData = [
         technologies: [
           'Obsidian',
           'TypeScript',
-          'GitHub Actions',
           'PostgreSQL',
           'pgvector',
         ],
