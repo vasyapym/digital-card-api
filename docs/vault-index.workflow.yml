@@ -1,0 +1,49 @@
+# Template for a PRIVATE vault repo — save as .github/workflows/second-brain-index.yml.
+# Secret: BRAIN_DB_URL — connection string of a least-privilege DB role granted on brain_* tables only.
+# Optional vault files: .second-brain/config.json ({"excludeFolders": [...]}) and denylist.txt
+# (one private string per line, grepped against the pinned code on every run).
+# Runs this repo's indexer at a pinned tag; bump the ref to the tag you trust.
+name: second-brain-index
+on:
+  push:
+    branches: [main]
+    paths: ['**.md', '.second-brain/**']
+  workflow_dispatch:
+    inputs:
+      full: { description: 'Re-embed everything', type: boolean, default: false }
+concurrency: { group: second-brain-index, cancel-in-progress: true }
+permissions: { contents: read }
+jobs:
+  index:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with: { path: vault, fetch-depth: 0, filter: 'blob:none' }
+      - uses: actions/checkout@v4
+        with: { repository: vasyapym/obsidian-second-brain, ref: v1.0.1, path: tools, persist-credentials: false }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: tools/package-lock.json }
+      - working-directory: tools
+        run: npm ci --no-audit --no-fund && npm run build
+      - uses: actions/cache@v4
+        with:
+          path: tools/models
+          key: brain-model-${{ hashFiles('tools/src/second-brain/embedding/embedding.constants.ts') }}
+      - working-directory: tools
+        env:
+          BRAIN_MODEL_DIR: ${{ github.workspace }}/tools/models
+        run: node dist/second-brain/embedding/fetch-model.js
+      - name: leak guard (counts only)
+        run: |
+          f=vault/.second-brain/denylist.txt
+          [ -f "$f" ] || exit 0
+          n=$(grep -rIlwFf "$f" tools --exclude-dir=node_modules --exclude-dir=models --exclude-dir=.git | wc -l)
+          echo "leak-guard: matched_files=$n"; [ "$n" -eq 0 ]
+      - working-directory: tools
+        env:
+          BRAIN_DB_URL: ${{ secrets.BRAIN_DB_URL }}
+          BRAIN_VAULT_DIR: ${{ github.workspace }}/vault
+          BRAIN_FULL: ${{ inputs.full && '1' || '0' }}
+          BRAIN_MODEL_DIR: ${{ github.workspace }}/tools/models
+        run: node dist/second-brain/indexer/cli.js
