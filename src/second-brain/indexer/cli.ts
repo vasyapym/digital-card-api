@@ -8,7 +8,7 @@ import { SIGNATURE } from '../embedding/embedding.constants';
 import { passageInput } from '../embedding/embedder';
 import { TransformersEmbedder, loadCountTokens } from '../embedding/transformers-embedder';
 import { keysForNote } from '../shared/link-keys';
-import { CHUNKER_VERSION, Chunk, chunkNote } from './chunk';
+import { CHUNKER_VERSION, chunkNote } from './chunk';
 import { loadVaultConfig, parseEnv } from './config';
 import { gitHead, gitMarkdownChanges, gitMarkdownFiles, gitMarkdownUpdatedAt, runGit } from './git';
 import { formatSummary, redactError } from './log';
@@ -132,32 +132,16 @@ async function main(): Promise<void> {
       prepared.push({ id: idForPath(rel), path: rel, hash: sha256Hex(raw), parsed });
     }
 
+    // Skip-unchanged: incremental always; full too when the stored model signature
+    // matches (makes a full rebuild RESUMABLE — a cancelled run re-embeds only
+    // what is not yet stored, and the summary counts those skips as unchanged).
     let unchanged = 0;
     let toIndex = prepared;
-    if (mode === 'incremental' && prepared.length > 0) {
+    const skipSupported = mode === 'incremental' || meta.embed_signature === SIGNATURE;
+    if (skipSupported && prepared.length > 0) {
       const known = await store.selectNoteHashes(prisma, prepared.map((n) => n.id));
       toIndex = prepared.filter((n) => known.get(n.id) !== n.hash);
       unchanged = prepared.length - toIndex.length;
-    }
-
-    let noteChunks: Chunk[][] = [];
-    if (toIndex.length > 0) {
-      const countTokens = await loadCountTokens();
-      noteChunks = toIndex.map((n) => chunkNote(n.parsed, countTokens));
-    }
-
-    const inputs: string[] = [];
-    for (let i = 0; i < toIndex.length; i += 1) {
-      for (const chunk of noteChunks[i]) {
-        inputs.push(passageInput(toIndex[i].parsed.title, chunk.heading, chunk.text));
-      }
-    }
-    let vectors: number[][] = [];
-    if (inputs.length > 0) {
-      const embedder = new TransformersEmbedder({
-        intraOpNumThreads: Math.min(4, os.cpus().length),
-      });
-      vectors = await embedder.embedPassages(inputs);
     }
 
     let fullTimes: Map<string, string> | null = null;
@@ -174,14 +158,25 @@ async function main(): Promise<void> {
       return (await runGit(vaultDir, ['log', '-1', '--format=%cI', '--', rel])).trim();
     };
 
+    // STREAM per note: chunk -> embed its passages -> store -> next. Every stored
+    // note is banked durably, so a timeout or cancel inherits its progress via
+    // hash-skip on the next run instead of losing hours of vectorization.
     let chunksStored = 0;
     let linksStored = 0;
-    let cursor = 0;
+    const embedder: TransformersEmbedder | null =
+      toIndex.length > 0
+        ? new TransformersEmbedder({ intraOpNumThreads: Math.min(4, os.cpus().length) })
+        : null;
+    const countTokens = toIndex.length > 0 ? await loadCountTokens() : null;
+
     for (let i = 0; i < toIndex.length; i += 1) {
       const n = toIndex[i];
-      const chunks = noteChunks[i];
-      const embeddings = vectors.slice(cursor, cursor + chunks.length);
-      cursor += chunks.length;
+      const chunks = chunkNote(n.parsed, countTokens!);
+      const embeddings = chunks.length
+        ? await embedder!.embedPassages(
+            chunks.map((chunk) => passageInput(n.parsed.title, chunk.heading, chunk.text)),
+          )
+        : [];
       const result = await store.storeNote(prisma, {
         id: n.id,
         path: n.path,
