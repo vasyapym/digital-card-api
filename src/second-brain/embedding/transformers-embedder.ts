@@ -59,6 +59,10 @@ export class TransformersEmbedder {
   }
 
   private async embedBatch(texts: string[]): Promise<number[][]> {
+    // Hostile inputs could make the pipeline's own tokenizer explode; the pipeline
+    // truncates to the 512-token window anyway, so cap the fed text defensively.
+    const SAFE_CHARS = 20000;
+    texts = texts.map((t) => (t.length > SAFE_CHARS ? t.slice(0, SAFE_CHARS) : t));
     const pipe = await this.getPipeline();
     let vectors: number[][];
     try {
@@ -85,7 +89,7 @@ export async function loadCountTokens(): Promise<(text: string) => number> {
   env.localModelPath = resolveModelRoot();
   try {
     const tokenizer = await transformers.AutoTokenizer.from_pretrained(MODEL_ID);
-    return (text: string) => {
+    const rawCount = (text: string): number => {
       // transformers.js encode() returns a plain number[] of token ids; older
       // shapes ({ input_ids: number[] | Tensor }) are covered defensively.
       const enc = tokenizer.encode(text) as unknown;
@@ -96,6 +100,17 @@ export async function loadCountTokens(): Promise<(text: string) => number> {
       const n = list?.length ?? 0;
       if (n === 0) throw new Error('tokenizer failed');
       return n;
+    };
+    return (text: string): number => {
+      try {
+        return rawCount(text);
+      } catch {
+        // the library's own encode() can hit call-stack limits on hostile input
+        // (course-grained unicode, huge runs); degrade to a length estimate so
+        // the chunker still splits instead of failing the whole run.
+        const estimate = Math.ceil(text.length / 3);
+        return estimate > 0 ? estimate : 1;
+      }
     };
   } catch {
     throw new Error('model load failed');
