@@ -84,7 +84,7 @@ export const profilesData = [
       {
         name: 'Obsidian Second Brain',
         description:
-          'My Obsidian vault, searchable from any device by keywords and by meaning — indexed in CI by a pinned local model, no AI provider.',
+          'Obsidian vault, searchable from any device by keywords and by meaning - indexed in CI by a pinned local model.',
         url: 'https://github.com/vasyapym/obsidian-second-brain',
         repositoryUrl: 'https://github.com/vasyapym/obsidian-second-brain',
         technologies: [
