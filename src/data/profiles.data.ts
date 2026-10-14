@@ -88,10 +88,10 @@ export const profilesData = [
         url: 'https://github.com/vasyapym/obsidian-second-brain',
         repositoryUrl: 'https://github.com/vasyapym/obsidian-second-brain',
         technologies: [
-          'Obsidian',
           'TypeScript',
           'PostgreSQL',
           'pgvector',
+          'e5 embeddings',
         ],
       },
       {
