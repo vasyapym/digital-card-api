@@ -3,19 +3,32 @@ import { createHash } from 'crypto';
 import { promises as fs } from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { PrismaClient } from '@prisma/client';
 import { SIGNATURE } from '../embedding/embedding.constants';
 import { passageInput } from '../embedding/embedder';
 import { TransformersEmbedder, loadCountTokens } from '../embedding/transformers-embedder';
 import { keysForNote } from '../shared/link-keys';
 import { CHUNKER_VERSION, chunkNote } from './chunk';
 import { loadVaultConfig, parseEnv } from './config';
+import { createDbRunner, DbRunner } from './db';
 import { gitHead, gitMarkdownChanges, gitMarkdownFiles, gitMarkdownUpdatedAt, runGit } from './git';
 import { formatProgress, formatSummary, redactError } from './log';
 import { ParsedNote, parseNote } from './parse';
 import { applyActions, chooseMode, FileChange } from './plan';
 import * as store from './store';
 import { applyExcludes } from './vault-files';
+
+/**
+ * Best-effort run-side telemetry: CI publishes step logs only after the step
+ * ends, so while the run lives the database is the only readable window.
+ * brain_meta.debug_phase records where the process is right now (counts only).
+ */
+async function setPhase(db: DbRunner, name: string): Promise<void> {
+  try {
+    await db.once('phase', (c) => store.writeMeta(c, { debug_phase: name }), 15_000);
+  } catch {
+    console.log('index: phase skipped');
+  }
+}
 
 function fail(err: unknown): void {
   const red = redactError(err);
@@ -57,16 +70,13 @@ async function main(): Promise<void> {
   const env = parseEnv(process.env);
   const vaultDir = env.BRAIN_VAULT_DIR;
   const vaultConfig = loadVaultConfig(vaultDir);
-  const prisma = new PrismaClient({
-    datasources: { db: { url: env.BRAIN_DB_URL } },
-  });
+  const db = createDbRunner(env.BRAIN_DB_URL);
 
   try {
-    const meta = await store.readMeta(prisma, [
-      'last_indexed_sha',
-      'embed_signature',
-      'chunker_version',
-    ]);
+    await setPhase(db, 'boot');
+    const meta = await db.run('read-meta', (c) =>
+      store.readMeta(c, ['last_indexed_sha', 'embed_signature', 'chunker_version']),
+    );
     const storedSha = meta.last_indexed_sha ?? null;
     const headSha = await gitHead(vaultDir);
 
@@ -100,11 +110,14 @@ async function main(): Promise<void> {
     if (mode === 'full' && !meta.embed_signature) {
       meta.embed_signature = SIGNATURE;
       meta.chunker_version = String(CHUNKER_VERSION);
-      await store.writeMeta(prisma, {
-        embed_signature: meta.embed_signature,
-        chunker_version: meta.chunker_version,
-      });
+      await db.run('stamp', (c) =>
+        store.writeMeta(c, {
+          embed_signature: meta.embed_signature,
+          chunker_version: meta.chunker_version,
+        }),
+      );
     }
+    await setPhase(db, `mode=${mode}`);
 
     let fullPaths: string[] = [];
     let changes: FileChange[] = [];
@@ -155,14 +168,19 @@ async function main(): Promise<void> {
     let toIndex = prepared;
     const skipSupported = mode === 'incremental' || meta.embed_signature === SIGNATURE;
     if (skipSupported && prepared.length > 0) {
-      const known = await store.selectNoteHashes(prisma, prepared.map((n) => n.id));
+      await setPhase(db, 'hash-skip');
+      const known = await db.run('hash-skip', (c) =>
+        store.selectNoteHashes(c, prepared.map((n) => n.id)),
+      );
       toIndex = prepared.filter((n) => known.get(n.id) !== n.hash);
       unchanged = prepared.length - toIndex.length;
+      await setPhase(db, `skip-done unchanged=${unchanged} toIndex=${toIndex.length}`);
     }
 
     let fullTimes: Map<string, string> | null = null;
     let headTime = '';
     if (mode === 'full') {
+      await setPhase(db, 'git-times');
       fullTimes = await gitMarkdownUpdatedAt(vaultDir);
     } else if (toIndex.length > 0) {
       headTime = (await runGit(vaultDir, ['log', '-1', '--format=%cI'])).trim();
@@ -181,11 +199,13 @@ async function main(): Promise<void> {
     let linksStored = 0;
     const loopStarted = Date.now();
     const PROGRESS_EVERY = 25;
+    await setPhase(db, 'model-load');
     const embedder: TransformersEmbedder | null =
       toIndex.length > 0
         ? new TransformersEmbedder({ intraOpNumThreads: Math.min(4, os.cpus().length) })
         : null;
     const countTokens = toIndex.length > 0 ? await loadCountTokens() : null;
+    await setPhase(db, `embed 0/${toIndex.length}`);
 
     for (let i = 0; i < toIndex.length; i += 1) {
       const n = toIndex[i];
@@ -195,21 +215,23 @@ async function main(): Promise<void> {
             chunks.map((chunk) => passageInput(n.parsed.title, chunk.heading, chunk.text)),
           )
         : [];
-      const result = await store.storeNote(prisma, {
-        id: n.id,
-        path: n.path,
-        name: n.parsed.name,
-        title: n.parsed.title,
-        keys: keysForNote(n.path, n.parsed.aliases),
-        tags: n.parsed.tags,
-        body: n.parsed.body,
-        frontmatter: n.parsed.frontmatter ?? {},
-        hash: n.hash,
-        updatedAt: await resolveUpdatedAt(n.path),
-        chunks,
-        embeddings,
-        linkTargets: linkTargetsOf(n.parsed),
-      });
+      const result = await db.run('store-note', async (c) =>
+        store.storeNote(c, {
+          id: n.id,
+          path: n.path,
+          name: n.parsed.name,
+          title: n.parsed.title,
+          keys: keysForNote(n.path, n.parsed.aliases),
+          tags: n.parsed.tags,
+          body: n.parsed.body,
+          frontmatter: n.parsed.frontmatter ?? {},
+          hash: n.hash,
+          updatedAt: await resolveUpdatedAt(n.path),
+          chunks,
+          embeddings,
+          linkTargets: linkTargetsOf(n.parsed),
+        }),
+      );
       chunksStored += chunks.length;
       linksStored += result.links;
       if ((i + 1) % PROGRESS_EVERY === 0 || i + 1 === toIndex.length) {
@@ -221,6 +243,7 @@ async function main(): Promise<void> {
             ms: Date.now() - loopStarted,
           }),
         );
+        await setPhase(db, `embed ${i + 1}/${toIndex.length}`);
       }
     }
 
@@ -228,13 +251,14 @@ async function main(): Promise<void> {
     const deleteIds = new Set([...deletePaths].map(idForPath));
     if (mode === 'full') {
       const seen = new Set([...prepared.map((n) => n.id), ...skippedIds]);
-      for (const id of await store.listNoteIds(prisma)) {
+      for (const id of await db.run('list-note-ids', (c) => store.listNoteIds(c))) {
         if (!seen.has(id)) deleteIds.add(id);
       }
     }
-    if (deleteIds.size > 0) await store.deleteNotes(prisma, [...deleteIds]);
+    if (deleteIds.size > 0) await db.run('delete-notes', (c) => store.deleteNotes(c, [...deleteIds]));
 
-    const totals = await store.countAll(prisma);
+    await setPhase(db, 'summary');
+    const totals = await db.run('count-all', (c) => store.countAll(c));
     const metaEntries: Record<string, string> = {
       last_indexed_sha: headSha,
       last_indexed_at: new Date().toISOString(),
@@ -246,7 +270,8 @@ async function main(): Promise<void> {
       metaEntries.embed_signature = SIGNATURE;
       metaEntries.chunker_version = String(CHUNKER_VERSION);
     }
-    await store.writeMeta(prisma, metaEntries);
+    await db.run('meta-final', (c) => store.writeMeta(c, metaEntries));
+    await setPhase(db, 'done');
 
     console.log(
       formatSummary({
@@ -263,7 +288,7 @@ async function main(): Promise<void> {
       }),
     );
   } finally {
-    await prisma.$disconnect().catch(() => undefined);
+    await db.close().catch(() => undefined);
   }
 }
 

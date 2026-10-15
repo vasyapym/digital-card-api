@@ -116,16 +116,28 @@ export async function deleteNotes(prisma: PrismaClient, ids: string[]): Promise<
   await prisma.$executeRawUnsafe('DELETE FROM brain_notes WHERE id = ANY($1::text[])', ids);
 }
 
+/**
+ * selectNoteHashes caps its ANY() array — no single round-trip ever carries the
+ * whole vault of ids/runs; slices merge into one map. Merged result identical
+ * to a single unbounded query.
+ */
+const HASH_CHUNK = 400;
+export const SELECT_NOTE_HASHES_CHUNK = HASH_CHUNK;
+
 export async function selectNoteHashes(
   prisma: PrismaClient,
   ids: string[],
 ): Promise<Map<string, string>> {
-  if (ids.length === 0) return new Map();
-  const rows = await prisma.$queryRawUnsafe<Array<{ id: string; hash: string }>>(
-    'SELECT id, hash FROM brain_notes WHERE id = ANY($1::text[])',
-    ids,
-  );
-  return new Map(rows.map((r) => [r.id, r.hash]));
+  const out = new Map<string, string>();
+  for (let i = 0; i < ids.length; i += HASH_CHUNK) {
+    const slice = ids.slice(i, i + HASH_CHUNK);
+    const rows = await prisma.$queryRawUnsafe<Array<{ id: string; hash: string }>>(
+      'SELECT id, hash FROM brain_notes WHERE id = ANY($1::text[])',
+      slice,
+    );
+    for (const r of rows) out.set(r.id, r.hash);
+  }
+  return out;
 }
 
 export async function listNoteIds(prisma: PrismaClient): Promise<string[]> {
