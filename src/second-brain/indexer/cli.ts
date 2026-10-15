@@ -209,12 +209,15 @@ async function main(): Promise<void> {
 
     for (let i = 0; i < toIndex.length; i += 1) {
       const n = toIndex[i];
+      await setPhase(db, `note ${i + 1}/${toIndex.length} t0`);
       const chunks = chunkNote(n.parsed, countTokens!);
+      await setPhase(db, `note ${i + 1}/${toIndex.length} chunks=${chunks.length}`);
       const embeddings = chunks.length
         ? await embedder!.embedPassages(
             chunks.map((chunk) => passageInput(n.parsed.title, chunk.heading, chunk.text)),
           )
         : [];
+      await setPhase(db, `note ${i + 1}/${toIndex.length} embedded`);
       const result = await db.run('store-note', async (c) =>
         store.storeNote(c, {
           id: n.id,
@@ -243,7 +246,6 @@ async function main(): Promise<void> {
             ms: Date.now() - loopStarted,
           }),
         );
-        await setPhase(db, `embed ${i + 1}/${toIndex.length}`);
       }
     }
 

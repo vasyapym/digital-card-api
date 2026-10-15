@@ -1,6 +1,7 @@
 // src/second-brain/embedding/transformers-embedder.ts
 import { EMBEDDING_DIM, MODEL_ID, resolveModelRoot } from './embedding.constants';
 import { BATCH_SIZE, BatchingEmbedder } from './embedder';
+import { SAFE_INPUT_CHARS, guardedCount } from './token-guard';
 
 type FeaturePipeline = (
   texts: string[],
@@ -61,8 +62,9 @@ export class TransformersEmbedder {
   private async embedBatch(texts: string[]): Promise<number[][]> {
     // Hostile inputs could make the pipeline's own tokenizer explode; the pipeline
     // truncates to the 512-token window anyway, so cap the fed text defensively.
-    const SAFE_CHARS = 20000;
-    texts = texts.map((t) => (t.length > SAFE_CHARS ? t.slice(0, SAFE_CHARS) : t));
+    // v1.0.8: the cap also keeps the pipeline far below the measured superlinear
+    // zone of its tokenizer (tens of seconds per large input).
+    texts = texts.map((t) => (t.length > SAFE_INPUT_CHARS ? t.slice(0, SAFE_INPUT_CHARS) : t));
     const pipe = await this.getPipeline();
     let vectors: number[][];
     try {
@@ -101,17 +103,11 @@ export async function loadCountTokens(): Promise<(text: string) => number> {
       if (n === 0) throw new Error('tokenizer failed');
       return n;
     };
-    return (text: string): number => {
-      try {
-        return rawCount(text);
-      } catch {
-        // the library's own encode() can hit call-stack limits on hostile input
-        // (course-grained unicode, huge runs); degrade to a length estimate so
-        // the chunker still splits instead of failing the whole run.
-        const estimate = Math.ceil(text.length / 3);
-        return estimate > 0 ? estimate : 1;
-      }
-    };
+    // v1.0.8: the chunker calls the counter many times per large note, and
+    // encode() is superlinear in input size (measured: 48s for 45KB) —
+    // estimate large inputs instead of tokenizing (the same length/3 formula
+    // v1.0.4 already uses for throwing inputs).
+    return (text: string): number => guardedCount(text, rawCount);
   } catch {
     throw new Error('model load failed');
   }
