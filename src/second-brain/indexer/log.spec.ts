@@ -1,5 +1,34 @@
 // src/second-brain/indexer/log.spec.ts
-import { formatSummary, redactError } from './log';
+import { formatProgress, formatSummary, redactError } from './log';
+
+describe('formatProgress', () => {
+  it('formats counts, rate and eta exactly, on one line', () => {
+    const line = formatProgress({ done: 50, total: 200, chunks: 230, ms: 900000 });
+    expect(line).toBe(
+      'index: progress done=50/200 chunks=230 ms=900000 rate=3.3/min eta=45m',
+    );
+    expect(line.split('\n')).toHaveLength(1);
+  });
+
+  it('formats hour-scale eta as h units', () => {
+    const line = formatProgress({ done: 120, total: 760, chunks: 71, ms: 3600000 });
+    expect(line).toBe(
+      'index: progress done=120/760 chunks=71 ms=3600000 rate=2.0/min eta=5h20m',
+    );
+  });
+
+  it('never carries note content, titles or paths', () => {
+    const line = formatProgress({ done: 25, total: 100, chunks: 25, ms: 1 });
+    expect(line).not.toContain('.md');
+    expect(line).not.toContain('passage:');
+  });
+
+  it('reports unknown eta before the first completed note', () => {
+    expect(formatProgress({ done: 0, total: 10, chunks: 0, ms: 0 })).toBe(
+      'index: progress done=0/10 chunks=0 ms=0 rate=0.0/min eta=unknown',
+    );
+  });
+});
 
 describe('formatSummary', () => {
   it('formats the incremental line exactly', () => {

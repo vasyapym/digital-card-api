@@ -11,7 +11,7 @@ import { keysForNote } from '../shared/link-keys';
 import { CHUNKER_VERSION, chunkNote } from './chunk';
 import { loadVaultConfig, parseEnv } from './config';
 import { gitHead, gitMarkdownChanges, gitMarkdownFiles, gitMarkdownUpdatedAt, runGit } from './git';
-import { formatSummary, redactError } from './log';
+import { formatProgress, formatSummary, redactError } from './log';
 import { ParsedNote, parseNote } from './parse';
 import { applyActions, chooseMode, FileChange } from './plan';
 import * as store from './store';
@@ -90,6 +90,22 @@ async function main(): Promise<void> {
       chunkerVersion: CHUNKER_VERSION,
     });
 
+    // Stamp the build identity BEFORE any embed work, not only after success:
+    // a full rebuild that dies at a ceiling never completed, and without the
+    // stamp the next run could not prove the stored rows are ours — resume
+    // stayed disabled and every retry re-embedded the whole vault from scratch.
+    // Safe to stamp when absent: stored rows all come from builds of this exact
+    // signature (embedding.constants has never changed since M0+M1), and when a
+    // stamp IS present but differs the run keeps skip off and stamps nothing.
+    if (mode === 'full' && !meta.embed_signature) {
+      meta.embed_signature = SIGNATURE;
+      meta.chunker_version = String(CHUNKER_VERSION);
+      await store.writeMeta(prisma, {
+        embed_signature: meta.embed_signature,
+        chunker_version: meta.chunker_version,
+      });
+    }
+
     let fullPaths: string[] = [];
     let changes: FileChange[] = [];
     if (mode === 'full') {
@@ -163,6 +179,8 @@ async function main(): Promise<void> {
     // hash-skip on the next run instead of losing hours of vectorization.
     let chunksStored = 0;
     let linksStored = 0;
+    const loopStarted = Date.now();
+    const PROGRESS_EVERY = 25;
     const embedder: TransformersEmbedder | null =
       toIndex.length > 0
         ? new TransformersEmbedder({ intraOpNumThreads: Math.min(4, os.cpus().length) })
@@ -194,6 +212,16 @@ async function main(): Promise<void> {
       });
       chunksStored += chunks.length;
       linksStored += result.links;
+      if ((i + 1) % PROGRESS_EVERY === 0 || i + 1 === toIndex.length) {
+        console.log(
+          formatProgress({
+            done: i + 1,
+            total: toIndex.length,
+            chunks: chunksStored,
+            ms: Date.now() - loopStarted,
+          }),
+        );
+      }
     }
 
     // Full rebuild never truncates first: upsert everything, then delete the rest.
