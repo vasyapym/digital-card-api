@@ -9,6 +9,7 @@ import { HealthController } from './health/health.controller';
 import { MessagesModule } from './messages/messages.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ProfileModule } from './profile/profile.module';
+import { SecondBrainModule } from './second-brain/second-brain.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { ProfileModule } from './profile/profile.module';
     PrismaModule,
     ProfileModule,
     MessagesModule,
+    ...(process.env.BRAIN_ENABLED === 'true' ? [SecondBrainModule] : []),
   ],
   controllers: [AppController, HealthController],
 })

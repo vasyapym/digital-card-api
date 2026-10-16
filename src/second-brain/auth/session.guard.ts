@@ -51,7 +51,7 @@ export class SessionGuard implements CanActivate {
 
 // Returns the literal value of the named cookie from a raw Cookie header.
 // The token is base64url plus a dot, so no URL decoding is applied.
-function readCookie(
+export function readCookie(
   header: string | undefined,
   name: string,
 ): string | undefined {
