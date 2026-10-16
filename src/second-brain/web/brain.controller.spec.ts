@@ -286,6 +286,53 @@ describe('BrainController (handlers invoked directly, guards bypassed)', () => {
       expectFixedHeaders(res);
     });
 
+    it('treats a literal null origin as no claim and proceeds to verify', async () => {
+      const res = makeResponse();
+      await fx.controller.loginPost(
+        makeRequest({
+          host: HOST,
+          origin: 'null',
+          body: { passphrase: 'wrong' },
+        }),
+        asExpress(res),
+      );
+      expect(statusOf(res)).toBe(401);
+      expect(fx.verify).toHaveBeenCalledTimes(1);
+      expect(fx.recordFailure).toHaveBeenCalledTimes(1);
+    });
+
+    it('accepts a proxy-forwarded host match', async () => {
+      const res = makeResponse();
+      const req = {
+        headers: {
+          host: 'internal:10000',
+          'x-forwarded-host': 'app.example.com',
+          origin: 'https://app.example.com',
+        },
+        query: {},
+        body: { passphrase: 'wrong' },
+      } as unknown as Request;
+      await fx.controller.loginPost(req, asExpress(res));
+      expect(statusOf(res)).toBe(401);
+      expect(fx.verify).toHaveBeenCalledTimes(1);
+    });
+
+    it('accepts a comma-listed forwarded host chain', async () => {
+      const res = makeResponse();
+      const req = {
+        headers: {
+          host: 'internal:10000',
+          'x-forwarded-host': 'app.example.com, edge2.internal',
+          origin: 'https://app.example.com',
+        },
+        query: {},
+        body: { passphrase: 'wrong' },
+      } as unknown as Request;
+      await fx.controller.loginPost(req, asExpress(res));
+      expect(statusOf(res)).toBe(401);
+      expect(fx.verify).toHaveBeenCalledTimes(1);
+    });
+
     it('unlocked, empty body: 400 missing passphrase, no verify, no failure recorded', async () => {
       const res = makeResponse();
       await fx.controller.loginPost(

@@ -71,16 +71,29 @@ export class BrainController {
   // POST /brain/login: origin gate, lockout, passphrase, then session cookie.
   @Post('login')
   async loginPost(@Req() req: Request, @Res() res: Response): Promise<void> {
-    // CSRF gate: a present Origin must parse and match the Host header.
+    // CSRF gate: a present Origin must parse and match the site host, allowing
+    // for proxy-forwarded hosts; a literal "null" origin carries no site claim
+    // and is treated as absent (SameSite=Lax remains the primary defense).
     const origin = req.headers['origin'];
-    if (typeof origin === 'string') {
+    if (typeof origin === 'string' && origin !== 'null') {
       let originHost: string | undefined;
       try {
         originHost = new URL(origin).host;
       } catch {
         originHost = undefined;
       }
-      if (originHost === undefined || originHost !== req.headers.host) {
+      const allowedHosts = new Set<string>();
+      for (const raw of [req.headers['x-forwarded-host'], req.headers.host]) {
+        const values = Array.isArray(raw) ? raw : [raw];
+        for (const value of values) {
+          if (typeof value !== 'string') continue;
+          for (const part of value.split(',')) {
+            const host = part.trim().toLowerCase();
+            if (host !== '') allowedHosts.add(host);
+          }
+        }
+      }
+      if (originHost === undefined || !allowedHosts.has(originHost)) {
         throw new ForbiddenException();
       }
     }
