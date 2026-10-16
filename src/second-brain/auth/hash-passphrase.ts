@@ -90,6 +90,9 @@ async function readPassphrase(): Promise<string> {
   if (!stdin.isTTY) {
     return readAll(stdin);
   }
+  // One cue on stderr so the silent raw read never looks hung; stdout stays clean
+  // (the hash line only), which keeps pipe users unaffected.
+  process.stderr.write('passphrase: ');
   setRawMode(stdin, true);
   try {
     return await readLineRaw(stdin);
@@ -109,6 +112,9 @@ async function main(): Promise<void> {
   } catch {
     process.exitCode = 130;
     return;
+  }
+  if (process.stdin.isTTY) {
+    process.stderr.write('\n');
   }
   const passphrase = stripTrailingNl(input);
   if (passphrase.length === 0) {
