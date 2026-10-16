@@ -3,6 +3,11 @@ import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Env } from '../config/env';
 import { systemClock } from '../common/clock';
+import { QUERY_EMBEDDER } from './search/search.service';
+import { SearchService } from './search/search.service';
+import { NotesRepository } from './notes/notes.repository';
+import { NoteView } from './notes/note.view';
+import { TransformersEmbedder } from './embedding/transformers-embedder';
 import { SessionService } from './auth/session.service';
 import { SessionGuard } from './auth/session.guard';
 import { LoginThrottle } from './auth/login-throttle';
@@ -13,6 +18,7 @@ import { BrainExceptionFilter } from './web/brain-exception.filter';
 import { BrainLayoutView } from './views/layout';
 import { LoginView } from './views/login.view';
 import { HomeView } from './views/home.view';
+import { SearchView } from './views/search.view';
 
 // Mounted by AppModule only when BRAIN_ENABLED === 'true'.
 // ConfigService and PrismaService come from global modules, so no imports here.
@@ -35,11 +41,29 @@ import { HomeView } from './views/home.view';
       provide: LoginThrottle,
       useFactory: () => new LoginThrottle(systemClock),
     },
+    // Query embedder for BRAIN_SEMANTIC=true; the pipeline loads lazily on the
+    // first call, so a plain construction costs nothing while the flag is off.
+    {
+      provide: QUERY_EMBEDDER,
+      useFactory: () => {
+        const transformer = new TransformersEmbedder();
+        return (
+          text: string,
+        ): Promise<number[]> =>
+          transformer
+            .embedPassages([text])
+            .then((rows) => rows[0] ?? []);
+      },
+    },
+    SearchService,
+    NotesRepository,
+    NoteView,
     SessionGuard,
     MetaService,
     BrainLayoutView,
     LoginView,
     HomeView,
+    SearchView,
     BrainExceptionFilter,
   ],
 })

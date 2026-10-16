@@ -23,10 +23,11 @@ export function relativeTime(nowMs: number, atMs: number): string {
 
 @Injectable()
 export class HomeView {
-  // Fragment only: freshness line plus the logout form. Search arrives with its route.
+  // Fragment: freshness line, the search box (points at the round 3 route), and logout.
   public render(f: BrainFreshness): string {
     return [
       this.freshnessLine(f),
+      '<form method="get" action="/brain/search"><input type="search" name="q" autocomplete="off" autofocus></form>',
       '<form method="post" action="/brain/logout">',
       '<button type="submit">Log out</button>',
       '</form>',

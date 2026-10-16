@@ -46,6 +46,9 @@ button,input,select,textarea{max-width:100%;padding:var(--s2) var(--s3);border:1
 button{border-color:var(--accent);background:var(--accent);color:var(--bg);cursor:pointer}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 ::selection{background:var(--accent);color:var(--bg)}
+.hit-title{margin:var(--s6) 0 var(--s1);font-weight:600}
+p.snippet{margin:0}
+mark{background:var(--accent);color:var(--bg)}
 </style>
 </head>
 <body>${bodyHtml}</body>

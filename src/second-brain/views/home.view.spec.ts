@@ -80,11 +80,18 @@ describe('HomeView', () => {
     expect(html).toContain('<button type="submit">Log out</button>');
   });
 
-  it('renders no search form yet', () => {
+  it('renders the search box between the freshness line and the logout form', () => {
     const html = view.render({ lastIndexedAt: new Date(NOW), noteCount: 1 });
-    expect(html).not.toContain('/brain/search');
-    expect(html).not.toContain('type="search"');
-    expect(html).not.toContain('<select');
+    const form =
+      '<form method="get" action="/brain/search"><input type="search" name="q" autocomplete="off" autofocus></form>';
+    expect(html).toContain(form);
+    const searchAt = html.indexOf(form);
+    const metaAt = html.indexOf('<p class="meta">');
+    const logoutAt = html.indexOf('action="/brain/logout"');
+    expect(metaAt).toBeGreaterThanOrEqual(0);
+    expect(searchAt).toBeGreaterThan(metaAt);
+    expect(logoutAt).toBeGreaterThan(searchAt);
+    expect(html).not.toContain('value="');
   });
 
   it('is a fragment without scripts or a doctype', () => {

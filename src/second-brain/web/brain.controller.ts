@@ -4,6 +4,7 @@ import {
   ForbiddenException,
   Get,
   Injectable,
+  NotFoundException,
   Post,
   Req,
   Res,
@@ -21,10 +22,14 @@ import {
   sanitizeNext,
 } from '../auth/session.guard';
 import { SessionService } from '../auth/session.service';
+import { NotesRepository } from '../notes/notes.repository';
+import { NoteView } from '../notes/note.view';
 import { HomeView } from '../views/home.view';
 import { BrainLayoutView } from '../views/layout';
 import { LoginView } from '../views/login.view';
+import { SearchView } from '../views/search.view';
 import { BrainExceptionFilter } from './brain-exception.filter';
+import { SearchService } from '../search/search.service';
 import { MetaService } from './meta.service';
 import { applyBrainHeaders } from './security-headers';
 
@@ -40,6 +45,10 @@ export class BrainController {
     private readonly layout: BrainLayoutView,
     private readonly loginView: LoginView,
     private readonly homeView: HomeView,
+    private readonly searchView: SearchView,
+    private readonly searches: SearchService,
+    private readonly notes: NotesRepository,
+    private readonly noteView: NoteView,
   ) {}
 
   // GET /brain/login: a valid session skips the form.
@@ -152,7 +161,7 @@ export class BrainController {
     this.redirect(res, '/brain/login');
   }
 
-  // GET /brain: home page with exactly one freshness lookup.
+  // GET /brain/home: home page with exactly one freshness lookup.
   @Get()
   @UseGuards(SessionGuard)
   async home(@Res() res: Response): Promise<void> {
@@ -161,6 +170,42 @@ export class BrainController {
     res
       .status(200)
       .send(this.layout.render('Brain', this.homeView.render(freshness)));
+  }
+
+  // GET /brain/search?q=... : the q gate trims, caps at 200 and bounces home on empty.
+  @Get('search')
+  @UseGuards(SessionGuard)
+  async search(@Req() req: Request, @Res() res: Response): Promise<void> {
+    this.applyHeaders(res);
+    const q = firstQueryValue(req.query['q'])
+      .trim()
+      .slice(0, SEARCH_MAX_LENGTH);
+    if (q === '') {
+      this.redirect(res, '/brain');
+      return;
+    }
+    const results = await this.searches.search(q);
+    res
+      .status(200)
+      .send(this.layout.render('Search', this.searchView.render(q, results)));
+  }
+
+  // GET /brain/n/:id : the 16-hex gate rejects before any database query.
+  @Get('n/:id')
+  @UseGuards(SessionGuard)
+  async openNote(@Req() req: Request, @Res() res: Response): Promise<void> {
+    const id = req.params['id'];
+    if (typeof id !== 'string' || !NOTE_ID_PATTERN.test(id)) {
+      throw new NotFoundException();
+    }
+    const page = await this.notes.findNote(id);
+    if (page === null) {
+      throw new NotFoundException();
+    }
+    this.applyHeaders(res);
+    res
+      .status(200)
+      .send(this.layout.render(page.title, this.noteView.render(page)));
   }
 
   private applyHeaders(res: Response): void {
@@ -172,4 +217,19 @@ export class BrainController {
     res.setHeader('Location', url);
     res.send('');
   }
+}
+
+// The search-query cap and the note-id gate, pinned by the design.
+const SEARCH_MAX_LENGTH = 200;
+const NOTE_ID_PATTERN = /^[0-9a-f]{16}$/;
+
+// Only the first member of a repeated query value is considered.
+function firstQueryValue(value: unknown): string {
+  if (typeof value === 'string') {
+    return value;
+  }
+  if (Array.isArray(value) && typeof value[0] === 'string') {
+    return value[0];
+  }
+  return '';
 }

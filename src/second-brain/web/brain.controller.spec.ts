@@ -1,5 +1,5 @@
 // src/second-brain/web/brain.controller.spec.ts
-import { ForbiddenException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import type { Request, Response } from 'express';
 import { BrainController } from './brain.controller';
 import { BrainLayoutView } from '../views/layout';
@@ -9,6 +9,10 @@ import { LoginThrottle } from '../auth/login-throttle';
 import { PassphraseService } from '../auth/passphrase.service';
 import { SessionService } from '../auth/session.service';
 import { MetaService } from './meta.service';
+import { NoteView } from '../notes/note.view';
+import { NotesRepository } from '../notes/notes.repository';
+import { SearchService, type SearchResults } from '../search/search.service';
+import { SearchView } from '../views/search.view';
 
 const SECRET = 'unit-spec-session-secret-0123456789abcdefghij';
 const HOST = 'app.example.com';
@@ -115,6 +119,8 @@ function sessionTokenOf(res: FakeResponse): string {
 describe('BrainController (handlers invoked directly, guards bypassed)', () => {
   let locked = false;
   let canned: Freshness = NOT_INDEXED;
+  let cannedResults: SearchResults = { hits: [], notices: [] };
+  let cannedNote: object | null = null;
   let fx: ReturnType<typeof makeFixture>;
 
   function makeFixture() {
@@ -123,6 +129,8 @@ describe('BrainController (handlers invoked directly, guards bypassed)', () => {
     const registerSuccess = jest.fn();
     const verify = jest.fn(async (candidate: string) => candidate === 'right');
     const freshness = jest.fn(async () => canned);
+    const search = jest.fn(async (q: string) => cannedResults);
+    const findNote = jest.fn(async (id: string) => cannedNote);
     const controller = new BrainController(
       new SessionService(SECRET),
       { isLocked, recordFailure, registerSuccess } as unknown as LoginThrottle,
@@ -131,8 +139,21 @@ describe('BrainController (handlers invoked directly, guards bypassed)', () => {
       new BrainLayoutView(),
       new LoginView(),
       new HomeView(),
+      new SearchView(),
+      { search } as unknown as SearchService,
+      { findNote } as unknown as NotesRepository,
+      new NoteView(),
     );
-    return { controller, isLocked, recordFailure, registerSuccess, verify, freshness };
+    return {
+      controller,
+      isLocked,
+      recordFailure,
+      registerSuccess,
+      verify,
+      freshness,
+      search,
+      findNote,
+    };
   }
 
   async function issueToken(): Promise<string> {
@@ -388,6 +409,89 @@ describe('BrainController (handlers invoked directly, guards bypassed)', () => {
       expect(header(res, 'location')).toBe('/brain/login');
       expect(header(res, 'set-cookie')).toBe(CLEAR_COOKIE);
       expect(res.body).toBe('');
+      expectFixedHeaders(res);
+    });
+  });
+
+  describe('GET /brain/search', () => {
+    it('runs the search with the trimmed, capped q and renders the page', async () => {
+      cannedResults = {
+        hits: [
+          {
+            id: 'a1',
+            title: 'T',
+            path: 'Notes/A.md',
+            heading: 'H',
+            anchor: 'h',
+            snippet: 's\uE000q\uE001',
+          },
+        ],
+        notices: [],
+      };
+      const res = makeResponse();
+      const req = {
+        headers: {},
+        query: { q: '  ' + 'x'.repeat(300) + '  ' },
+      } as unknown as Request;
+      await fx.controller.search(req, asExpress(res));
+      expect(fx.search).toHaveBeenCalledTimes(1);
+      expect(fx.search).toHaveBeenCalledWith('x'.repeat(200));
+      expect(statusOf(res)).toBe(200);
+      expect(res.body).toContain('<p class="hit-title">');
+      expectFixedHeaders(res);
+    });
+
+    it('bounces an empty q home with a 303 and never searches', async () => {
+      const res = makeResponse();
+      const req = {
+        headers: {},
+        query: { q: '   ' },
+      } as unknown as Request;
+      await fx.controller.search(req, asExpress(res));
+      expect(fx.search).not.toHaveBeenCalled();
+      expect(statusOf(res)).toBe(303);
+      expect(header(res, 'location')).toBe('/brain');
+      expect(res.body).toBe('');
+    });
+  });
+
+  describe('GET /brain/n/:id', () => {
+    it('rejects a non-16-hex id with NotFoundException and no queries', async () => {
+      const res = makeResponse();
+      const req = {
+        params: { id: 'short' },
+        headers: {},
+        query: {},
+      } as unknown as Request;
+      await expect(fx.controller.openNote(req, asExpress(res))).rejects.toBeInstanceOf(
+        NotFoundException,
+      );
+      expect(fx.findNote).not.toHaveBeenCalled();
+    });
+
+    it('renders the note page for a valid id', async () => {
+      cannedNote = {
+        id: 'aaaaaaaaaaaaaaaa',
+        title: 'Alpha',
+        path: 'Notes/Alpha.md',
+        folderPath: 'Notes',
+        name: 'Alpha',
+        bodyHtml: '<p>body &amp; more</p>',
+        tags: ['garden'],
+        updatedAt: new Date('2026-01-02T03:04:05Z'),
+        backlinks: [],
+      };
+      const res = makeResponse();
+      const req = {
+        params: { id: 'aaaaaaaaaaaaaaaa' },
+        headers: {},
+        query: {},
+      } as unknown as Request;
+      await fx.controller.openNote(req, asExpress(res));
+      expect(fx.findNote).toHaveBeenCalledWith('aaaaaaaaaaaaaaaa');
+      expect(statusOf(res)).toBe(200);
+      expect(res.body).toContain('<h2>Alpha</h2>');
+      expect(res.body).toContain('<p>body &amp; more</p>');
       expectFixedHeaders(res);
     });
   });

@@ -12,6 +12,49 @@ import { PassphraseService } from '../auth/passphrase.service';
 import { SessionGuard } from '../auth/session.guard';
 import { SessionService } from '../auth/session.service';
 import { MetaService } from './meta.service';
+import type { ConfigService } from '@nestjs/config';
+import type { Env } from '../../config/env';
+import { META_SQL } from '../search/search.sql';
+import { SearchService, type QueryEmbedder } from '../search/search.service';
+import { NotesRepository, NOTE_SQL } from '../notes/notes.repository';
+import { NoteView } from '../notes/note.view';
+import { SearchView } from '../views/search.view';
+import { PrismaService } from '../../prisma/prisma.service';
+
+// SQL-routed prisma fake for the search/reader layer: meta empty (keyword-only
+// gate), one canned note row, everything else empty.
+function brainRouter(): PrismaService {
+  const noteRow = {
+    id: 'aaaaaaaaaaaaaaaa',
+    path: 'Notes/Alpha.md',
+    name: 'Alpha',
+    title: 'Alpha note',
+    keys: ['notes/alpha', 'alpha'],
+    tags: ['alpha'],
+    frontmatter: {},
+    body: 'Body text about [[A]] and [[B]].',
+    hash: 'x',
+    updated_at: new Date('2026-01-02T03:04:05Z'),
+    indexed_at: new Date('2026-01-02T03:04:05Z'),
+  };
+  const raw = jest.fn(async (sql: string, ..._params: unknown[]): Promise<unknown> => {
+    if (sql === NOTE_SQL) return [noteRow];
+    return [];
+  });
+  return { $queryRawUnsafe: raw } as unknown as PrismaService;
+}
+
+function searchConfig(): ConfigService<Env, true> {
+  return {
+    get: (key: string) => (key === 'BRAIN_SEMANTIC' ? false : undefined),
+  } as unknown as ConfigService<Env, true>;
+}
+
+function deadEmbedder(): QueryEmbedder {
+  return async (_text: string): Promise<number[]> => {
+    throw new Error('not used while semantics are off');
+  };
+}
 
 type FetchResponse = Awaited<ReturnType<typeof fetch>>;
 
@@ -81,6 +124,13 @@ describe('BrainController runtime probe (real Nest boot, plain HTTP on localhost
             freshness: async () => ({ lastIndexedAt: null, noteCount: null }),
           }),
         },
+        {
+          provide: SearchService,
+          useFactory: () => new SearchService(brainRouter(), searchConfig(), deadEmbedder()),
+        },
+        { provide: NotesRepository, useFactory: () => new NotesRepository(brainRouter()) },
+        SearchView,
+        NoteView,
         BrainLayoutView,
         LoginView,
         HomeView,
@@ -173,6 +223,28 @@ describe('BrainController runtime probe (real Nest boot, plain HTTP on localhost
     await shortcut.text();
     expect(shortcut.status).toBe(303);
     expect(shortcut.headers.get('location')).toBe('/brain/sub');
+
+    // Round 3 routing through the real pipeline: search gate, hex gate, note page.
+    const noQ = await get('/brain/search', { cookie });
+    await noQ.text();
+    expect(noQ.status).toBe(303);
+    expect(noQ.headers.get('location')).toBe('/brain');
+
+    const empty = await get('/brain/search?q=zz', { cookie });
+    const emptyBody = await empty.text();
+    expect(empty.status).toBe(200);
+    expect(emptyBody).toContain('no matches');
+    expect(emptyBody).toContain('value="zz"');
+
+    const badNote = await get('/brain/n/not-hex', { cookie });
+    const badBody = await badNote.text();
+    expect(badNote.status).toBe(404);
+    expect(badBody).toContain('not found');
+
+    const opened = await get('/brain/n/aaaaaaaaaaaaaaaa', { cookie });
+    const openedBody = await opened.text();
+    expect(opened.status).toBe(200);
+    expect(openedBody).toContain('<h2>Alpha note</h2>');
 
     const logout = await post('/brain/logout', '', { cookie });
     await logout.text();
