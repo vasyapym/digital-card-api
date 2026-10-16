@@ -18,7 +18,7 @@ RUN npm ci
 COPY tsconfig.json tsconfig.build.json nest-cli.json ./
 COPY src ./src
 RUN npx prisma generate \
- && npm test \
+ && npm test -- --maxWorkers=2 --workerIdleMemoryLimit=512MB \
  && npm run build
 RUN npm prune --omit=dev \
  && npx prisma generate
