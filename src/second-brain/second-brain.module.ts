@@ -8,6 +8,7 @@ import { SearchService } from './search/search.service';
 import { NotesRepository } from './notes/notes.repository';
 import { NoteView } from './notes/note.view';
 import { TransformersEmbedder } from './embedding/transformers-embedder';
+import { createQueryEmbedder } from './search/query-embedder.provider';
 import { SessionService } from './auth/session.service';
 import { SessionGuard } from './auth/session.guard';
 import { LoginThrottle } from './auth/login-throttle';
@@ -45,15 +46,7 @@ import { SearchView } from './views/search.view';
     // first call, so a plain construction costs nothing while the flag is off.
     {
       provide: QUERY_EMBEDDER,
-      useFactory: () => {
-        const transformer = new TransformersEmbedder();
-        return (
-          text: string,
-        ): Promise<number[]> =>
-          transformer
-            .embedPassages([text])
-            .then((rows) => rows[0] ?? []);
-      },
+      useFactory: () => createQueryEmbedder(new TransformersEmbedder()),
     },
     SearchService,
     NotesRepository,
