@@ -74,7 +74,10 @@ export const profilesData = [
         position: 'Junior Researcher',
         startDate: '2021-01-01',
         endDate: '2024-08-31',
+        description:
+          'The lab documents the languages of the indigenous peoples of the Arctic on LingvoDoc (lingvodoc.ispras.ru).',
         achievements: [
+          'Documented and analyzed Arctic indigenous languages on LingvoDoc (dictionaries, corpora)',
           'Quantitative corpus analysis in Python (pandas, regex)',
           'Automated parsing, cleaning, and computation over large datasets',
         ],
@@ -107,6 +110,19 @@ export const profilesData = [
           'Rust',
           'WebAssembly',
           'three.js',
+        ],
+      },
+      {
+        name: 'hermitage-3d',
+        description:
+          'The Winter Palace (Hermitage) rebuilt in the browser: a classical facade generated from a typed grammar, lit by the real Saint Petersburg sky at load time.',
+        url: 'https://hermitage-3d.pages.dev',
+        repositoryUrl: 'https://github.com/vasyapym/hermitage-3d',
+        technologies: [
+          'TypeScript',
+          'three.js',
+          'WebGL2',
+          'Vite',
         ],
       },
       {
